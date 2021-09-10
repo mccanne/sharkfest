@@ -1,5 +1,4 @@
-# |
-  | The Zed Project: Stumbling Upon a New Data Model for
+# The Zed Project: Stumbling Upon a New Data Model for
   | Search and Analytics while Hacking on Packets
 
 > This README comprises a presentation I gave at Sharkfest '21
@@ -10,12 +9,12 @@
 
 If you've ever tried to assemble operational infrastructure for
 search and analytics of network-oriented traffic logs, you know what a
-daunting task this can be.  About three years ago, we embarked upon a project
+daunting task this can be.  Roughly three years ago, we embarked upon a project
 to explore search and analytics for Zeek and Suricata "sensors" running on live
 network taps or over archived PCAP files.  Having experimented extensively
 with well-known, open-source search and analytics systems and after talking
 to a wide range of practitioners of such tech stacks, we noticed a recurring
-design pattern: a search cluster is often deployed to hold recent logs
+_design pattern_: a search cluster is often deployed to hold recent logs
 for interactive queries, while some sort of data lake is deployed
 in parallel to hold historical data for batch analytics.
 
@@ -44,6 +43,7 @@ across distributed workers.
 * Thanks & Background
 * Zed & Brim
     * (quick demo of pcap drag into Brim)
+    * (pcaps/xxx.pcap)[pcaps/xxx.pcap]
 * A pivot from Zeek/security to Zed/data
     * how we realized the data model inspired by Zeek TSV was so fundamental
 
@@ -72,7 +72,7 @@ And by the way, why do you want to manage two different systems?
 * An old adage says _you should separate policy from mechanism_
 * Yet, Parquet, Avro, JSON-schema, and RDBMS tables combine schema with format
 * If schemas are your policy _and_ your mechanism for clean data,
-this might just be resoundingly wrong...
+this might just lead to problems...
 
 _\<rant\> An aside: Parquet is based on the Dremel work from Google.
 Have a look and please let me know how long it takes you to understand
@@ -99,7 +99,7 @@ What if _the mechanism_ were _self-describing data_:
 * First-class types
 * Type-adaptive operators
 
-And what if _the policy_ were enforced by the _type system_?
+And what if _the policy_ were enforced externally by the _type system_?
 
 Then, a schema is simply a special case of a record type...
 
@@ -109,7 +109,110 @@ How do we get to this split of mechanism and policy?
 
 Let's get down in the weeds...
 
-(demo)
+## Composable Tools
+
+Before talking about the data model, let me outline the tools.
+
+* Search/analytics engine
+* Pcap to Zed converter/indexer
+* Lake storage model (details later)
+* Service endpoints - REST API to ingest, query, organize a lake
+
+We have taken a very modular, "composable tools" approach
+* fabulous for dev, test, debug
+* bite-sized pieces for learning the system
+
+> run `zed -h` and walk through commands briefly
+> zed lake vs zed api
+
+Like the `docker` command, everything packaged under the `zed` command, though there
+are two shortcuts:
+* `zq` - `zed query` operates on files and streams
+* `zapi`- `zed api` client to talk to service
+
+## zq in Brief
+
+XXX show zq queries over some JSON
+
+## A Zed Primer
+
+Let's start with JSON and we'll work our away over to relational tables.
+
+We wanted Zed to be a superset of JSON and relational tables but let's
+start with JSON:
+* object
+* array
+* string
+* number (float64)
+* bool
+* null
+
+E.g., this command will convert the given object into "Zed":
+```
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z -
+```
+You will notice:
+* don't need (but can have) quotes around field names
+* otherwise, very familiar
+* at the same time, very different
+
+E.g., what is the "type" of this object or "record" in Zed terminology:
+```
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut TYPE:=typeof(this)" -
+```
+`this` refers to each input record in sequence.
+This creates a new record with one field `TYPE` whose value is a
+_type value_ indicating the type signature of the input.
+
+The type of a type value is type _type_:
+```
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut TYPE:=typeof(typeof(this))" -
+```
+
+* These are _first-class types_
+* A powerful means for data discovery and instropection
+
+Zed also has all the expected data types, e.g., IP addresses, networks,
+so we can cast the strings here into Zed native types...
+```
+echo '{"a":"128.32.1.1","n":"10.0.0.1/8"}' | zq -Z "a:=ip(a),n:=net(n)" -
+```
+
+## Union Types
+
+The `typeof` operator can be applied to any field, e.g.,
+```
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut TYPE:=typeof(a)" -
+```
+This gives `[int64]` i.e., an array of `int64`.
+
+But JSON is dynamically typed whereas Zed is statically typed.
+What if field `a` had mixed types?
+```
+echo '{"a":[1,"hello",true]}' | zq -Z "cut TYPE:=typeof(a)" -
+```
+This gives ``(int64,string,bool)`!
+This is type array of a union of `int64`, `string`, and `bool`.
+
+Note: union types are essential in "shaping" and "fusing" values of different types.
+e.g.,
+```
+echo '{a:1,b:1} {a:"hello",b:2}' | zq -Z fuse -
+```
+
+## Zed Inspired by Zeek
+
+(This is where the Z comes from.)
+
+
+## Zed in the App
+
+## relational tables
+
+SELECT s.District, avg(sc.AvgScrMath),min(sc.AvgScrMath),max(sc.AvgScrMath)
+FROM school s
+LEFT JOIN satscore sc ON s.District=sc.dname
+GROUP BY s.District | fuse
 
 ## Bio
 
