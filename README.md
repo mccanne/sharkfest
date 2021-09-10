@@ -87,7 +87,7 @@ Said another way, from a dev perspective...
 * If you are creating relational tables before you can query...
 * If you are writing code to talk to a schema registry...
 
-... then you are doing things the hard way.
+... then you are probably doing things the hard way.
 
 Your extra effort comes from having to handle policy and mechanism _at the same time_.
 
@@ -495,7 +495,7 @@ main/live branching model for streaming pipelines
 ## .
 
 Zed is like JSON with types but a bit more.
-Not JSON schema... the whole idea of attaching schemas to data seemed weird to me.  Don't you just want a type system?  THen you don't need the clunkiness of out of band schema definition.  A value just is what is.
+Not JSON schema... the whole idea of attaching schemas to data seemed weird to me.  Don't you just want a type system?  Then you don't need the clunkiness of out of band schema definition.  A value just is what is.
 
 If you flip it upside down like this then a schema is just a uniform type across Zed records.  It's just a special case of the type system.
 
