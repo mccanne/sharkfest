@@ -113,6 +113,8 @@ Let's get down in the weeds...
 
 Before talking about the data model, let me outline the tools.
 
+(draw picture)
+
 * Search/analytics engine
 * Pcap to Zed converter/indexer
 * Lake storage model (details later)
@@ -130,13 +132,16 @@ are two shortcuts:
 * `zq` - `zed query` operates on files and streams
 * `zapi`- `zed api` client to talk to service
 
-## zq in Brief
-
-XXX show zq queries over some JSON
-
 ## A Zed Primer
 
 Let's start with JSON and we'll work our away over to relational tables.
+
+We'll use `zq` to take an input, do no processing, and display it
+in pretty-printed ZSON.
+
+```
+echo "..." | zq -Z -
+```
 
 We wanted Zed to be a superset of JSON and relational tables but let's
 start with JSON:
@@ -170,7 +175,7 @@ echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut TYPE:=typeof(typeof
 ```
 
 * These are _first-class types_
-* A powerful means for data discovery and instropection
+* A powerful means for data discovery and introspection
 
 Zed also has all the expected data types, e.g., IP addresses, networks,
 so we can cast the strings here into Zed native types...
@@ -191,18 +196,78 @@ What if field `a` had mixed types?
 ```
 echo '{"a":[1,"hello",true]}' | zq -Z "cut TYPE:=typeof(a)" -
 ```
-This gives ``(int64,string,bool)`!
-This is type array of a union of `int64`, `string`, and `bool`.
+This gives `(int64,string,bool)`!
+* parentheses indicate a _union_ type
+* so this is type array of a union of `int64`, `string`, and `bool`
 
 Note: union types are essential in "shaping" and "fusing" values of different types.
 e.g.,
 ```
 echo '{a:1,b:1} {a:"hello",b:2}' | zq -Z fuse -
 ```
+Note also that a sequence of records is valid ZSON so
+* no need to put them in an array like JSON
+* ZSON is also a _superset of NDJSON_
+
+## Zed is a Superset of Relational Tables
+
+Armed with a strong typing, we can tackle relational tables.
+
+Start with with a simple example:
+```
+cat employee.csv
+zq -Z -i csv employee.csv
+```
+Note that `id` and `field` are floating point numbers by default
+(CSV doesn't tell use the types of things).
+```
+zq -Z -i csv "by typeof(this)" employee.csv
+```
+Let's clean that up...
+```
+zq -Z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv
+```
+Let's save in a new file...
+```
+zq -z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv > employee.zson
+```
+Now we have our relational table:
+```
+zq -f table  employee.zson
+```
+
+## Relational Zed
+
+Zed is a superset of SQL
+
+> Note: SQL support is currently experimental and early
+
+zq -f table "SELECT name WHERE salary >= 250000" employee.zson
+
+A _table_ is just a Zed type.
+
+Let's look at another table...
+```
+zq -Z -i csv deals.csv
+```
+This time we'll clean it up by casting to a shape...
+
 
 ## Zed Inspired by Zeek
 
+Why is all this type stuff important?
+
 (This is where the Z comes from.)
+
+Vision: clients will someday somehow express their data in
+a format like Zed (like Zeek does!)
+
+But we need to deal with messy data today...
+* Zed types tame the problem
+* Zed types make shaping easier
+* aShow how we shape suricata...
+
+Show type context...
 
 
 ## Zed in the App
