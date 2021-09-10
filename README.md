@@ -260,6 +260,7 @@ Let's shape both of the CSVs into a new file "tables.zson"...
 ```
 zq -z -i csv "type deal = {id:int64,name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv > tables.zson
 zq -z -i csv "type employee = {id:int64,name:string,city:string,phone:int64,salary:float64}; this:=cast(this,employee)" employee.csv >> tables.zson
+```
 
 ## SQL Tables as Zed Types
 
@@ -328,6 +329,21 @@ But we need to deal with messy data today...
 
 Show type context...
 
+## Mechanism/Policy Revisited
+
+Now you can see the separation:
+* You don't have to think about types _before you put data in Zed_
+* You can shape the data whenever however you want
+* You can this with the same format, in the same place
+
+Policy may then dictate:
+* What types you "are allowed to" query
+* What types you allow into the cleaned up data pool
+* What to do with data that has "the wrong shape"
+    * because something upstream changes
+    * let it in?
+    * put it in an "error" pool
+    * raise an alert
 
 ## Zed in the App
 
