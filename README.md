@@ -250,8 +250,67 @@ Let's look at another table...
 ```
 zq -Z -i csv deals.csv
 ```
-This time we'll clean it up by casting to a shape...
+This time we'll clean it up through _shaping_:
+```
+zq -Z -i csv "type deal = {id:int64,name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv
+```
+Note importantly the `(=deal)` type definition.
 
+Let's shape both of the CSVs into a new file "tables.zson"...
+```
+zq -z -i csv "type deal = {id:int64,name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv > tables.zson
+zq -z -i csv "type employee = {id:int64,name:string,city:string,phone:int64,salary:float64}; this:=cast(this,employee)" employee.csv >> tables.zson
+
+## SQL Tables as Zed Types
+
+```
+cat tables.zson
+```
+We can simply add a "FROM" clause to refer to a table by its type name:
+```
+zq -f table "SELECT name FROM employee WHERE salary >= 250000" tables.zson
+zq -f table "SELECT name FROM deal WHERE forecast >= 200000" tables.zson
+```
+Of course, there is an easier way given the mixed nature of the Zed data model...
+```
+zq -f table "salary >= 250000 or forecast >= 200000" tables.zson
+```
+
+## SQL/Zed Joins
+
+Since tables are just types, you can do JOINs too!
+
+```
+zq -f table "SELECT e.name AS NAME, d.forecast AS FORECAST FROM employee e JOIN deal d ON e.name=d.name" tables.zson
+```
+* You can aggregate too of course.  
+* Unlike SQL, Zed has sets and set operators
+```
+zq -f table "SELECT e.name AS NAME, union(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" tables.zson
+```
+Here it is in ZSON...
+```
+zq -z "SELECT e.name AS name, union(d.forecast) AS forecast FROM employee e JOIN deal d ON e.name=d.name GROUP BY name" tables.zson
+```
+The `|[ ... |]` syntax indicates a set.
+
+## Zed Format Family
+
+* ZSON - human readable like JSON (what I've been showing here)
+* ZNG - performant, binary, compressed row-based format
+* ZST - performant, binary, compressed column-based format
+```
+zq -o tables.zng tables.zson
+hexdump -C tables.zng
+```
+
+## Zed Type Context
+
+Show how type context works in ZNG
+
+Show how type context drives columnar structure in ZST.
+
+(contrast with systems that clean up data and store as parquet)
 
 ## Zed Inspired by Zeek
 
