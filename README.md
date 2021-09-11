@@ -1,5 +1,5 @@
-# The Zed Project: Stumbling Upon a New Data Model for
-  | Search and Analytics while Hacking on Packets
+# The Zed Project: Stumbling Upon a New Data Model
+ while Hacking on Packets
 
 > This README comprises a presentation I gave at Sharkfest '21
 > at 8-9am on September 17, 2021.  You can reproduce all the examples
@@ -98,7 +98,6 @@ XXX go through the pieces... explain how each individual piece is great...
 but the pieces don't always fit together nicely
 
 It's hard to make things easy.
-
 
 ## The Catch
 
