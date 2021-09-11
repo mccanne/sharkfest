@@ -40,21 +40,41 @@ across distributed workers.
 
 ## Introduction
 
-* Thanks & Background
-    * Some ancient history: PCAP, BPF, tcpdump
-    * Ten years ago: Stanford Sharkfest '11 and Riverbed
-    * Present: Up and at 'em with Brim and Zed!
+* Some ancient history: PCAP, BPF, tcpdump
+* Ten years ago: Stanford Sharkfest '11 and Riverbed
+* Present: Up and at 'em with Brim and Zed!
+    * Your 50s sure is different than your early 40s...
+    * But I think I still got something left!
 
 ## Sharkfest '11
 
 ![Summary Slide from 2011](fig/summary-2011.png)
 
+## Getting Back in the Game!
 
 * Zed & Brim
     * (quick demo of pcap drag into Brim)
     * (pcaps/xxx.pcap)[pcaps/xxx.pcap]
 
 
+## The Seed Team
+
+Front end
+* James Kerr
+* Mason Fish
+Infrastructure
+* Steve McCanne
+* Noah Treuhaft
+* Matt Nibecker
+* Al Landrum (ex-Brim)
+* Henri Dubois-Ferriere (ex-Brim)
+Community + "Product" + Jack-of-all-trades
+* Phil Rzewski
+UC Berkeley Collaborators
+* Amy Ousterhout
+* Silvery Fu
+* Sylvia Ratnasamy
+* Joe Hellerstein
 
 ## The Bifurcation of Search and Analytics
 
@@ -95,7 +115,12 @@ Said another way, from a dev perspective...
 
 Your extra effort comes from having to handle policy and mechanism _at the same time_.
 
-## A Concrete Example: Elastic
+## A Concrete Example: JSON + Elastic
+
+JSON backstory
+Brilliant move at "make it easy"
+    * Douglas Crockford story of JSON
+    * SO MUCH EASIER than XML, Soap, RPC
 
 zeek TSV -> but world doesn't understand this nice structure
 
