@@ -388,6 +388,8 @@ Show how type context drives columnar structure in ZST.
 
 ## Zed Inspired by Zeek
 
+(this section subsumed by Zeek motivation from above?)
+
 (Type back the relational muck to relateable pcap stuff.)
 
 Why is all this type stuff important?
@@ -414,6 +416,14 @@ composable tools and search indexes... just a zng file.
 
 xxx
 
+built on a cloud storage model...
+- everything is write-once immutable (no appends)
+- everything is named with a globally unique ID
+- transaction log has logical appends (as a new cloud object)
+- garbage collect unreachable objects
+
+Easy caching.  Can cache *everything* since everything is immutable and has a globally unique name.
+
 no leader election because of cloud storage semantics.
 state is detemined by XXX.
 
@@ -424,6 +434,22 @@ now show some lake use cases that leverage Zed...
 
 ## threat intel join example / workflow
 
+## main/live
+
+main/live branching model for streaming pipelines
+(work in progress, but power of approach is illustrated here)
+90% of clean up happens on the live to main branch, then kick off index job
+
+## Derived analytics
+
+edge graph... from beacons work.
+show how this query is not easily done with SQL
+
+relate to an orchestration agent.
+(could be triggered off commits...?)
+
+Introspection using meta-queries... the power of Zed in such an approach.
+Compare to database systems that have to design and implement internal fixed schemas for exporting introspection as relational tables.
 
 ## pcap lake example
 
@@ -433,7 +459,6 @@ XXX brimcap join on flow (you can create a community ID but you don't have
 to ... you just use the flow ID)
 Zed can join on record values so you can just form a flow ID record and
 do joins on that...
-
 
 ## Mechanism/Policy Revisited
 
