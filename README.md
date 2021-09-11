@@ -41,29 +41,20 @@ across distributed workers.
 ## Introduction
 
 * Thanks & Background
+    * Some ancient history: PCAP, BPF, tcpdump
+    * Ten years ago: Stanford Sharkfest '11 and Riverbed
+    * Present: Up and at 'em with Brim and Zed!
+
+## Sharkfest '11
+
+![Summary Slide from 2011](fig/summary-2011.png)
+
+
 * Zed & Brim
     * (quick demo of pcap drag into Brim)
     * (pcaps/xxx.pcap)[pcaps/xxx.pcap]
-* A pivot from Zeek/security to Zed/data
-    * how we realized the data model inspired by Zeek TSV was so fundamental
-    * (briefly explain Zeek and Suricata)
 
-## The Takeaway
 
-It's hard to make things easy...
-
-* A _gentle slope_ throughout
-* Lightweight, desktop-scale to large and more complex cloud deployment
-* Things just work
-
-We spend a lot of time fussing over the details, so if you find something
-complicated or surprising, let us know and we'll try to fix!
-
-ERGONOMICS
-
-* "Once my data is in ZNG, it's just easy..."
-* I can't explain it with words
-* You just have to dip your toes in and try it out...
 
 ## The Bifurcation of Search and Analytics
 
@@ -114,6 +105,8 @@ But systems like OpenSearch (formerly known as elastic) want structure.  No prob
 
 <picture of Foo turned into Bar with signaling to turn the Bar back into a Foo>
 
+[Corelight's ECS mapping repo](https://github.com/corelight/ecs-mapping)
+
 That's really inefficient!  Avro to the rescue.
 
 ## A Concrete Example: Avro
@@ -130,6 +123,21 @@ Devil's in the details.  Getting type contexts right while being efficient was t
 
 When we really started working on this problem, we realized we were working
 not on a security app, per se, but a fundamental data model problem.
+
+It's hard to make things easy...
+
+* A _gentle slope_ throughout
+* Lightweight, desktop-scale to large and more complex cloud deployment
+* Things just work
+
+We spend a lot of time fussing over the details, so if you find something
+complicated or surprising, let us know and we'll try to fix!
+
+ERGONOMICS
+
+* "Once my data is in ZNG, it's just easy..."
+* I can't explain it with words
+* You just have to dip your toes in and try it out...
 
 
 ## Zed: A Better Way
@@ -201,9 +209,27 @@ You will notice:
 * otherwise, very familiar
 * at the same time, very different
 
+## Zed is statically typed
+
+Unlike JSON, Zed is statically type and _comprehensive_
+```
+{
+        v1: 1,                                    // implied int64
+        v2: 1.5,
+        v3: 1 (uint8),
+        v4: 192.168.1.1,
+        v5: 192.168.1.0/24,
+        v6: [1,2,3],
+        v7: [1(uint32),2(uint32),3(uint32)],
+        v8: |["HEADS","TAILS"]|,
+        v9: |{"key1":"value1","key2":"value2"}|,
+        //XXX more
+}
+```
+
 E.g., what is the "type" of this object or "record" in Zed terminology:
 ```
-echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut TYPE:=typeof(this)" -
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut typeof(this)" -
 ```
 `this` refers to each input record in sequence.
 This creates a new record with one field `TYPE` whose value is a
@@ -211,7 +237,7 @@ _type value_ indicating the type signature of the input.
 
 The type of a type value is type _type_:
 ```
-echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut TYPE:=typeof(typeof(this))" -
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut typeof(typeof(this))" -
 ```
 
 * These are _first-class types_
