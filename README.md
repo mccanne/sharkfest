@@ -4,6 +4,9 @@
 > This README comprises a presentation I gave at Sharkfest '21
 > at 8-9am on September 17, 2021.  You can reproduce all the examples
 > herein from the tools referenced and files in this repo.
+> In a sense, this is Part 2 of
+> [my talk from 10 years ago](https://sharkfestus.wireshark.org/sf11)
+> at Sharkfest '11.
 
 ## Abstract
 
@@ -14,7 +17,7 @@ to explore search and analytics for Zeek and Suricata "sensors" running on live
 network taps or over archived PCAP files.  Having experimented extensively
 with well-known, open-source search and analytics systems and after talking
 to a wide range of practitioners of such tech stacks, we noticed a recurring
-_design pattern_: a search cluster is often deployed to hold recent logs
+and compelling _design pattern_: a search cluster is often deployed to hold recent logs
 for interactive queries, while some sort of data lake is deployed
 in parallel to hold historical data for batch analytics.
 
@@ -34,7 +37,7 @@ in a new query engine that operates over Zed data instead of JSON objects
 or relational tables, and admits and a new query language that is a superset
 of SQL and log-search style languages.  Finally, I'll outline our
 _"work in progress"_ adapting the Zed system to a Git-like data lake
-for cloud storage -- called a Zed lake --- providing time travel,
+for cloud storage -- called a _Zed lake_ --- providing time travel,
 live ingest, search indexes, and transactionally consistent views
 across distributed workers.
 
@@ -43,7 +46,7 @@ across distributed workers.
 * Some ancient history: PCAP, BPF, tcpdump
 * Ten years ago: Stanford Sharkfest '11 and Riverbed
 * Present: Up and at 'em with Brim and Zed!
-    * Your 50s sure is different than your early 40s...
+    * Your 50s sure are different from your early 40s... :)
     * But I think I still got something left!
 
 ## Sharkfest '11
@@ -57,20 +60,25 @@ across distributed workers.
     * (pcaps/xxx.pcap)[pcaps/xxx.pcap]
 
 
-## The Seed Team
+## Our Research Team
 
-Front end
+Pretty early on, we realized we weren't a typical startup
+maniacally focused on a go-to-market and instead embraced the idea that
+we'd take our time as a "research project"... we are just now transitioning
+from research to execution...
+
+#### Front end
 * James Kerr
 * Mason Fish
-Infrastructure
+#### Infrastructure
 * Steve McCanne
 * Noah Treuhaft
 * Matt Nibecker
 * Al Landrum (ex-Brim)
 * Henri Dubois-Ferriere (ex-Brim)
-Community + "Product" + Jack-of-all-trades
+#### Community + "Product" + Jack-of-all-trades
 * Phil Rzewski
-UC Berkeley Collaborators
+#### UC Berkeley Collaborators
 * Amy Ousterhout
 * Silvery Fu
 * Sylvia Ratnasamy
@@ -78,13 +86,19 @@ UC Berkeley Collaborators
 
 ## The Bifurcation of Search and Analytics
 
-* Search: OpenSearch, Elastic, Splunk
-* Analytics: A Data Lake
+* *Search*: OpenSearch, Elastic, Splunk
+* *Analytics*: A Data Lake
     * Log files (JSON or TSV) on a NFS cluster
     * Schema-siloed Parquet files on S3
     * "Cleaned-up data" in relational tables, e.g, ClickHouse, BigQuery, Snowflake
 
 (picture of bifurcated pipeline)
+
+XXX go through the pieces... explain how each individual piece is great...
+but the pieces don't always fit together nicely
+
+It's hard to make things easy.
+
 
 ## The Catch
 
@@ -100,8 +114,8 @@ And by the way, why do you want to manage two different systems?
 
 * An old adage says _you should separate policy from mechanism_
 * Yet, Parquet, Avro, JSON-schema, and RDBMS tables combine schema with format
-* If schemas are your policy _and_ your mechanism for clean data,
-this might just lead to problems...
+* If schemas are your policy for clean data _and_ tables/filters are your mechanism,
+then these approaches might just lead to headaches...
 
 ## Schema Declarations cause Cognitive Overload
 
@@ -115,12 +129,24 @@ Said another way, from a dev perspective...
 
 Your extra effort comes from having to handle policy and mechanism _at the same time_.
 
-## A Concrete Example: JSON + Elastic
+## The Search Silo: JSON + Elastic
 
-JSON backstory
-Brilliant move at "make it easy"
-    * Douglas Crockford story of JSON
-    * SO MUCH EASIER than XML, Soap, RPC
+Douglas Crockford: JSON
+    * Just send a javascript data structure to a javascript entity
+    * _So much easier_ than XML, SOAP, RPC
+    * And node.js arrived on the backend and we had _full stack_
+
+Shay Banon: Elastic
+    * Wrap Lucene in a REST API
+    * Post JSON docs to API
+    * Submit JSON search queries to API
+
+_It's hard to make things easy._  They did it.
+
+Brilliant, easy, simple.
+
+## The Search Silo: JSON + Elastic
+
 
 zeek TSV -> but world doesn't understand this nice structure
 
@@ -160,7 +186,8 @@ complicated or surprising, let us know and we'll try to fix!
 
 ERGONOMICS
 
-* "Once my data is in ZNG, it's just easy..."
+* "Once my data is in ZNG, everything is easy..."
+
 * I can't explain it with words
 * You just have to dip your toes in and try it out...
 
@@ -239,7 +266,7 @@ You will notice:
 Unlike JSON, Zed is statically type and _comprehensive_
 ```
 {
-        v1: 1,                                    // implied int64
+        v1: 1,
         v2: 1.5,
         v3: 1 (uint8),
         v4: 192.168.1.1,
@@ -251,6 +278,17 @@ Unlike JSON, Zed is statically type and _comprehensive_
         //XXX more
 }
 ```
+_It's hard to make things easy._
+
+But, let's follow Crockford's lead!
+
+Implied types!  Yeah!
+
+Then decorators.
+
+Data can be self-describing.  
+
+No need to define a schema a shoehorn it all in.
 
 E.g., what is the "type" of this object or "record" in Zed terminology:
 ```
