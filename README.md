@@ -47,6 +47,17 @@ across distributed workers.
 * A pivot from Zeek/security to Zed/data
     * how we realized the data model inspired by Zeek TSV was so fundamental
 
+## The Takeaway
+
+It's hard to make things easy...
+
+* A _gentle slope_ throughout
+* Lightweight, desktop-scale to large and more complex cloud deployment
+* Things just work
+
+We spend a lot of time fussing over the details, so if you find something
+complicated or suprising, let us know and we'll try to fix!
+
 ## The Bifurcation of Search and Analytics
 
 * Search: OpenSearch, Elastic, Splunk
@@ -304,6 +315,41 @@ The `|[ ... |]` syntax indicates a set.
 zq -o tables.zng tables.zson
 hexdump -C tables.zng
 ```
+You want columnar, no problem!
+```
+zq -f parquet -o tables.parquet tables.zng
+```
+Oops, that didn't work
+* Policy and mechanism intermixed again
+* Have to specify schema before you can write to the format
+* Schema same for all rows
+
+Ok, we can fuse...
+```
+zq -f parquet -o tables.parquet "fuse" tables.zng
+```
+But _I had to change the data_ to shoehorn it into Parquet's assumption.
+
+ZST is different...
+* separation of schema-silo fromm data...
+* heterogeneous sequence of records _of any type_
+* columns self-organized based on record types
+
+(picture of columns)
+
+```
+zq -f zst -o tables.zst tables.zng
+hexdump -C tables.zst
+```
+You can see the string values of each column are stored sequentially.
+
+And the data didn't have to change to go into column format even
+retaining the orginal order of records...
+```
+ zq -i zst tables.zst
+ ```
+
+
 
 ## Zed Type Context
 
@@ -354,6 +400,22 @@ FROM school s
 LEFT JOIN satscore sc ON s.District=sc.dname
 GROUP BY s.District | fuse
 
+## Wrap Up
+
+It's hard to make things easy ...
+
+* Separate of policy/mechanism in data engineering
+* Superset of JSON, relational tables
+* Intuitive data shaping with first-class types
+* Leverages the familiar Git design pattern
+* Nice, intuitive UX in App, in API, in CLI commands
+
+* Committed to open source
+    * [github.com/brimdata/brim](http://github.com/brimdata/brim)
+    * [github.com/brimdata/zed](http://github.com/brimdata/zed)
+* Public slack
+* Follow us on Twitter
+
 ## Bio
 
 Steve McCanne is the "Coding CEO" at Brim, a small startup
@@ -371,7 +433,6 @@ took his '02 company and Sharkfest's sponsor, Riverbed, public in '06.
 After many years working in other areas of tech, Steve has
 returned to his roots, dabbling again with PCAPs, leading him to Zed
 and a whole new way to approach network and IT observability data.
-
 
 Zed is comprised of a human-readable form called ZSON and two binary, performant
 formats for row and columnar layouts (called ZNG and ZST respectively).
