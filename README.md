@@ -86,35 +86,91 @@ from research to execution...
 * Sylvia Ratnasamy
 * Joe Hellerstein
 
-## The Bifurcation of Search and Analytics
+## Why not JSON + Elastic?
 
-* *Search*: OpenSearch, Elastic, Splunk
-* *Analytics*: A Data Lake
-    * Log files (JSON or TSV) on a NFS cluster
-    * Schema-siloed Parquet files on S3
-    * "Cleaned-up data" in relational tables, e.g, ClickHouse, BigQuery, Snowflake
+Douglas Crockford: JSON
+* Just send a javascript data structure to a javascript entity
+* _So much easier_ than XML, SOAP, RPC
+* And node.js arrived on the backend and we had _full stack_
 
-(picture of bifurcated pipeline)
+Shay Banon: Elastic
+* Wrap Lucene Java libr in a REST API
+* Post JSON docs to API
+* Submit JSON search queries to API
 
-XXX go through the pieces... explain how each individual piece is great...
-but the pieces don't always fit together nicely
+_It's hard to make things easy._  They did it.
 
-It's hard to make things easy.
+Brilliant, easy, simple.
 
 ## The Catch
 
-* There's a catch
-* ETL pipelines that route semi-structured events to "tables" are fragile
+Works great for many simple uses cases.
+
+But the simplicity of JSON is a double-edged sword
+* limited data types (object, array, string, number, bool, null)
+* no schemas in JSON
+* suboptimal format for scaleable analytics
+
+For example, the Zeek TSV is rich and structured.
+```
+#fields	ts              uid                     id.orig_h       id.orig_p ...
+#types  time            string                  addr            port      ...
+1521911721.255387	C8Tful1TvM3Zf5x8fl	10.164.94.120	39681 ...
+1521911721.411148	CXWfTK3LRdiuQxBbM6	10.47.25.80	50817 ...
+```
+But to get this structured data into Elastic...
+* format as JSON and lose information
+* configure extensive "mapping rules" in ingest pipeline
+* mapping rules recover richness of data that was originally present
+
+(TODO: figure of this process)
+
+[Corelight's ECS mapping repo](https://github.com/corelight/ecs-mapping)
+
+Hmm, _it's hard to make things easy_
+
+This all creates complexity.
+
+_It's hard to make things easy_
+
+## The Bifurcation of Search and Analytics
+
+Moreover, search is often not enough... need historical analytics
+
+Leads to a bifurcation
+
+* *Search*: OpenSearch, Elastic, Splunk
+    * Unstructured logs or semistructured JSON
+* *Analytics*: An Analytics Lake
+    * "Cleaned-up data" in relational tables, e.g, ClickHouse, BigQuery, Snowflake
+    * "Schema-siloed" Parquet files on S3
+
+(TODO: figure of bifurcated pipeline)
+
+Each piece is
+* easy enough and sensible by itself,
+* but when you assemble the pieces, things get complex fast!
+
+_It's hard to make things easy._
+
+## Schemas to the Rescue
+
+Make sure all data conforms to pre-design set of schemas
+* Elastic can recover rich structure even with JSON itermediary
+* Analytics organized around relational table with schemas
+* Parquet files with schemas for efficient columnar analytics
+
+But there's another catch...
+* It's all quite fragile
 * _The downstream stuff_ breaks when upstream things change
+* And why do you want to manage two different systems?
 
-And by the way, why do you want to manage two different systems?
-
-(picture of breakage)
+(TODO: figure of breakage)
 
 ## Policy & Mechanism
 
 * An old adage says _you should separate policy from mechanism_
-* Yet, Parquet, Avro, JSON-schema, and RDBMS tables combine schema with format
+* Yet, Parquet and RDBMS tables combine schema with format
 * If schemas are your policy for clean data _and_ tables/filters are your mechanism,
 then these approaches might just lead to headaches...
 
@@ -130,36 +186,7 @@ Said another way, from a dev perspective...
 
 Your extra effort comes from having to handle policy and mechanism _at the same time_.
 
-## The Search Silo: JSON + Elastic
-
-Douglas Crockford: JSON
-    * Just send a javascript data structure to a javascript entity
-    * _So much easier_ than XML, SOAP, RPC
-    * And node.js arrived on the backend and we had _full stack_
-
-Shay Banon: Elastic
-    * Wrap Lucene in a REST API
-    * Post JSON docs to API
-    * Submit JSON search queries to API
-
-_It's hard to make things easy._  They did it.
-
-Brilliant, easy, simple.
-
-## The Search Silo: JSON + Elastic
-
-
-zeek TSV -> but world doesn't understand this nice structure
-
-So, we dumb it down into JSON...  <ex>
-
-But systems like OpenSearch (formerly known as elastic) want structure.  No problem!  Tell OpenSearch that when it sees a certain pattern to turn into back into what it was at the source...
-
-<picture of Foo turned into Bar with signaling to turn the Bar back into a Foo>
-
-[Corelight's ECS mapping repo](https://github.com/corelight/ecs-mapping)
-
-That's really inefficient!  Avro to the rescue.
+_It's hard to make things easy._
 
 ## A Concrete Example: Avro
 
