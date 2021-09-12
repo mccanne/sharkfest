@@ -1,5 +1,4 @@
-# The Zed Project: Stumbling Upon a New Data Model
- while Hacking on Packets
+# The [Zed Project](https://github.com/brimdata/zed): Stumbling Upon a New Data Model while Hacking on Packets
 
 > This README comprises a presentation I gave at Sharkfest '21
 > at 8-9am on September 17, 2021.  You can reproduce all the examples
@@ -13,8 +12,10 @@
 If you've ever tried to assemble operational infrastructure for
 search and analytics of network-oriented traffic logs, you know what a
 daunting task this can be.  Roughly three years ago, we embarked upon a project
-to explore search and analytics for Zeek and Suricata "sensors" running on live
-network taps or over archived PCAP files.  Having experimented extensively
+to explore search and analytics for [Zeek](https://zeek.org/)
+and [Suricata](https://suricata.io/) "sensors" running on live
+network taps or over archived [PCAP files](https://www.tcpdump.org/).
+Having experimented extensively
 with well-known, open-source search and analytics systems and after talking
 to a wide range of practitioners of such tech stacks, we noticed a recurring
 and compelling _design pattern_: a search cluster is often deployed to hold recent logs
@@ -36,10 +37,11 @@ I will then discuss how we've leveraged the Zed data model
 in a new query engine that operates over Zed data instead of JSON objects
 or relational tables, and admits and a new query language that is a superset
 of SQL and log-search style languages.  Finally, I'll outline our
-_"work in progress"_ adapting the Zed system to a Git-like data lake
-for cloud storage -- called a _Zed lake_ --- providing time travel,
-live ingest, search indexes, and transactionally consistent views
-across distributed workers.
+_"work in progress"_ adapting the Zed system to a [Git-like](https://git-scm.com/)
+data lake for cloud storage -- called a
+[_Zed lake_](https://github.com/brimdata/zed/blob/main/docs/lake/README.md)
+--- providing time travel, live ingest, search indexes, and
+transactionally consistent views across distributed workers.
 
 ## Introduction
 
@@ -88,19 +90,19 @@ from research to execution...
 
 ## Why not JSON + Elastic?
 
-Douglas Crockford: JSON
+Douglas Crockford: [JSON](https://www.json.org/json-en.html)
 * Just send a javascript data structure to a javascript entity
 * _So much easier_ than XML, SOAP, RPC
-* And node.js arrived on the backend and we had _full stack_
+* And [node.js](https://nodejs.org) arrived on the backend and we had _full stack_
 
-Shay Banon: Elastic
-* Wrap Lucene Java libr in a REST API
+Shay Banon: [Elastic](https://github.com/elastic)
+* Wrap [Lucene Java lib](https://lucene.apache.org/) in a REST API
 * Post JSON docs to API
 * Submit JSON search queries to API
 
-_It's hard to make things easy._  They did it.
+_It's hard to make things easy._
 
-Brilliant, easy, simple.
+They did it.  Brilliant, easy, simple.
 
 ## The Catch
 
@@ -108,10 +110,10 @@ Works great for many simple uses cases.
 
 But the simplicity of JSON is a double-edged sword
 * limited data types (object, array, string, number, bool, null)
-* no schemas in JSON
+* no schemas in JSON (though there is JSON Schema)
 * suboptimal format for scaleable analytics
 
-For example, the Zeek TSV is rich and structured.
+For example, the Zeek TSV log format is rich and structured.
 ```
 #fields	ts              uid                     id.orig_h       id.orig_p ...
 #types  time            string                  addr            port      ...
@@ -121,13 +123,11 @@ For example, the Zeek TSV is rich and structured.
 But to get this structured data into Elastic...
 * format as JSON and lose information
 * configure extensive "mapping rules" in ingest pipeline
-* mapping rules recover richness of data that was originally present
+* mapping rules recover richness of data that was present but lost
 
 (TODO: figure of this process)
 
 [Corelight's ECS mapping repo](https://github.com/corelight/ecs-mapping)
-
-Hmm, _it's hard to make things easy_
 
 This all creates complexity.
 
@@ -156,14 +156,16 @@ _It's hard to make things easy._
 ## Schemas to the Rescue
 
 Make sure all data conforms to pre-design set of schemas
-* Elastic can recover rich structure even with JSON itermediary
+* Elastic can recover rich structure even with JSON intermediary
 * Analytics organized around relational table with schemas
 * Parquet files with schemas for efficient columnar analytics
 
 But there's another catch...
 * It's all quite fragile
+* Need to keep schema design in sync with reality
 * _The downstream stuff_ breaks when upstream things change
-* And why do you want to manage two different systems?
+
+And why do you want to manage two different systems?
 
 (TODO: figure of breakage)
 
@@ -171,12 +173,12 @@ But there's another catch...
 
 * An old adage says _you should separate policy from mechanism_
 * Yet, Parquet and RDBMS tables combine schema with format
-* If schemas are your policy for clean data _and_ tables/filters are your mechanism,
+* If schemas are your policy for clean data _and_ tables are your mechanism,
 then these approaches might just lead to headaches...
 
 ## Schema Declarations cause Cognitive Overload
 
-Said another way, from a dev perspective...
+Said another way...
 
 * If you are declaring schemas before you can write data...
 * If you are creating relational tables before you can query...
@@ -187,16 +189,6 @@ Said another way, from a dev perspective...
 Your extra effort comes from having to handle policy and mechanism _at the same time_.
 
 _It's hard to make things easy._
-
-## A Concrete Example: Avro
-
-register type Foo with the a schema registry get back a global ID.  Encode semi-structured into an efficient binary format and Bar-encoding tag it with ID.  Receiver fetches the Schema from the registry (and caches the binding) and decodes the Bar-encoding back to a Foo.
-
-Alternatively, send a verbose schema definition with every record...
-
-There's a better (and seemingly obvious) approach.  Put the type system in the data stream but do so efficiently...
-
-Devil's in the details.  Getting type contexts right while being efficient was tricky but an elegant solution emerged Type Context
 
 ## The "A Ha" Moment
 
@@ -454,9 +446,31 @@ The `|[ ... |]` syntax indicates a set.
 
 ## Zed Format Family
 
+## How'd we Get Here?
+
+There were lots of blind alleys and restarts.
+
+Along the way,
+I felt just like [Crockford who famously said:](https://www.youtube.com/watch?v=-C-JoyNuQJs)
+
+> "I discovered JSON.  I do not claimed to have invented it."
+
+Same for me, I felt like I discovered the Zed model and how the format
+families all elegantly fit together:
 * ZSON - human readable like JSON (what I've been showing here)
 * ZNG - performant, binary, compressed row-based format
 * ZST - performant, binary, compressed column-based format
+
+
+register type Foo with the a schema registry get back a global ID.  Encode semi-structured into an efficient binary format and Bar-encoding tag it with ID.  Receiver fetches the Schema from the registry (and caches the binding) and decodes the Bar-encoding back to a Foo.
+
+Alternatively, send a verbose schema definition with every record...
+
+There's a better (and seemingly obvious) approach.  Put the type system in the data stream but do so efficiently...
+
+Devil's in the details.  Getting type contexts right while being efficient was tricky but an elegant solution emerged Type Context
+
+
 ```
 zq -o tables.zng tables.zson
 hexdump -C tables.zng
@@ -605,6 +619,11 @@ End with pitch for help... we're focused on data platform and modular tools.
 We'd love for community to get involved.
 
 ## Wrap Up
+
+As we worked through all this over the past two years,
+I felt just like [Crockford who famously said](https://www.youtube.com/watch?v=-C-JoyNuQJs)
+
+> I discovered JSON.  I do not claimed to have invented it.
 
 It's hard to make things easy ...
 
