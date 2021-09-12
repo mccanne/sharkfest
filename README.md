@@ -59,6 +59,8 @@ across distributed workers.
     * (quick demo of pcap drag into Brim)
     * (pcaps/xxx.pcap)[pcaps/xxx.pcap]
 
+![Brim App](fig/brim-grab.png)
+
 
 ## Our Research Team
 
