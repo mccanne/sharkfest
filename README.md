@@ -316,14 +316,14 @@ Then decorators.
 
 Data can be self-describing.  
 
-No need to define a schema a shoehorn it all in.
+No need to define a schema first and shoehorn it all in.
 
 E.g., what is the "type" of this object or "record" in Zed terminology:
 ```
 echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut typeof(this)" -
 ```
 `this` refers to each input record in sequence.
-This creates a new record with one field `TYPE` whose value is a
+This creates a new record with one field `typeof` whose value is a
 _type value_ indicating the type signature of the input.
 
 The type of a type value is type _type_:
