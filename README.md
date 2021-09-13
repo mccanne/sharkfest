@@ -355,14 +355,15 @@ zq -Z "sample id" zeek.zng
 
 ## The Zed Data Model
 
-Note also that a sequence of records is valid ZSON so
+A sequence of records is valid ZSON
+```
+{a:1} {a:2} {s:"hello, world"}
+```
 * no need to put them in an array like JSON
-* ZSON is also a _superset of NDJSON_
+* ZSON is a _superset of NDJSON
 
-The Zed data model is:
-```
-A sequence of statically typed, heterogeneous values
-```
+The Zed data model is simply:
+> a sequence of statically typed, heterogeneous values
 
 ## Zed is a Superset of Relational Tables
 
@@ -569,33 +570,30 @@ ls -lh tables.*
 ls -lh zeek.*
 ```
 
-
-
 ## The Gentle Slope
-
-(go back to app)
-
-This all sounds really complicated...
 
 _It's hard to make things easy._
 
-The _gentle slope_:
-* Zed is like JSON
-* Zed is just a search language
-* Easy to dip your toes in
-    * But the more you learn, the more power you unlock
+Is all this stuff easy?
 
-## Zed Inspired by Zeek
+Well, there is some complexity, but how about we tame it with a _gentle slope_.
+* Easy learning curve
+    * start with JSON
+    * start with simple keyword search
+* Make use of simple stuff without knowing the complex stuff
+* The more you learn, the more power at your fingertips
 
-(this section subsumed by Zeek motivation from above?)
+Easy to dip your toes in...
 
-(Type back the relational muck to relateable pcap stuff.)
+(back to app)
+* go back to Zeek/Suricata
+* drag in tables.zng
+* if you know, SQL type SQL
+* you can also also
 
-Why is all this type stuff important?
-
-Compare/contrast Zeek and Suricata.
-
-(This is where the Z comes from.)
+Open area of work:
+* How to leverage the Zed data model in the UI?
+* Elegant UX for data instrospection and shaping
 
 Vision: clients will someday somehow express their data in
 a format like Zed (like Zeek does!)
@@ -605,9 +603,9 @@ But we need to deal with messy data today...
 * Zed types make shaping easier
 * Show how we shape suricata...
 
-Show type context...
+## The Zed Lake
 
-## Zed lake
+gentle slope: git-like design pattern
 
 put it all together in a lake
 
@@ -693,7 +691,19 @@ I felt just like [Crockford who famously said](https://www.youtube.com/watch?v=-
 
 > I discovered JSON.  I do not claimed to have invented it.
 
+Takeaways
+
 It's hard to make things easy ...
+* Separate of policy from mechanism
+* The gentle slope
+    * Data as easy as JSON or as complex as you would like
+    * Query language as easy as Google as rich as SQL
+    * Git-like Zed Lake
+* Easy data shaping
+    * Types as first-class values
+    * Type unions
+    * Rich casting operators
+* Scale from desk to CLI to cloud
 
 * Separate of policy/mechanism in data engineering
 * Superset of JSON, relational tables
