@@ -190,28 +190,6 @@ Your extra effort comes from having to handle policy and mechanism _at the same 
 
 _It's hard to make things easy._
 
-## The "A Ha" Moment
-
-When we really started working on this problem, we realized we were working
-not on a security app, per se, but a fundamental data model problem.
-
-It's hard to make things easy...
-
-* A _gentle slope_ throughout
-* Lightweight, desktop-scale to large and more complex cloud deployment
-* Things just work
-
-We spend a lot of time fussing over the details, so if you find something
-complicated or surprising, let us know and we'll try to fix!
-
-ERGONOMICS
-
-* "Once my data is in ZNG, everything is easy..."
-
-* I can't explain it with words
-* You just have to dip your toes in and try it out...
-
-
 ## Zed: A Better Way
 
 What if _the mechanism_ were _self-describing data_:
@@ -224,24 +202,12 @@ And what if _the policy_ were enforced externally by the _type system_?
 
 Then, a schema is simply a special case of a record type...
 
-## Devil's in the Details
-
-How do we get to this split of mechanism and policy?
-
-Let's get down in the weeds...
-
 ## Composable Tools
 
 Before talking about the data model, let me outline the tools.
 
-(draw picture)
-
-* Search/analytics engine
-* Pcap to Zed converter/indexer
-* Lake storage model (details later)
-* Service endpoints - REST API to ingest, query, organize a lake
-
 We have taken a very modular, "composable tools" approach
+* large set of simple verbs as commands
 * fabulous for dev, test, debug
 * bite-sized pieces for learning the system
 
@@ -263,14 +229,8 @@ in pretty-printed ZSON.
 ```
 echo "..." | zq -Z -
 ```
-
-We wanted Zed to be a superset of JSON... ergonomics!
-* object
-* array
-* string
-* number (float64)
-* bool
-* null
+Leverage the simplicity of JSON.
+* Zed is a superset of JSON
 
 E.g., this command will convert the given object into "Zed":
 ```
@@ -640,6 +600,28 @@ It's hard to make things easy ...
     * [github.com/brimdata/zed](http://github.com/brimdata/zed)
 * Public slack
 * Follow us on Twitter
+
+## TODO: integrate these ideas into wrap-up... The "A Ha" Moment
+
+When we really started working on this problem, we realized we were working
+not on a security app, per se, but a fundamental data model problem.
+
+It's hard to make things easy...
+
+* A _gentle slope_ throughout
+* Lightweight, desktop-scale to large and more complex cloud deployment
+* Things just work
+
+We spend a lot of time fussing over the details, so if you find something
+complicated or surprising, let us know and we'll try to fix!
+
+ERGONOMICS
+
+* "Once my data is in ZNG, everything is easy..."
+
+* I can't explain it with words
+* You just have to dip your toes in and try it out...
+
 
 ## Bio
 
