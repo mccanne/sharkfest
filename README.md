@@ -212,6 +212,7 @@ Then, a schema is simply a special case of a record type...
 Before talking about the data model, let me outline the tools.
 
 We have taken a very modular, "composable tools" approach
+* CLI tools written in [Go](https://golang.org/)
 * large set of simple verbs as commands
 * fabulous for dev, test, debug
 * bite-sized pieces for learning the system
@@ -661,7 +662,7 @@ But we need to deal with messy data today...
 
 ## The Zed Lake
 
-With unblunding, we then expose the power and scale of the Zed Lake.
+With unbundling, we then expose the power and scale of the Zed Lake.
 
 When Brim launches, it forks a Zed service in the background...
 * manages a local lake

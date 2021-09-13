@@ -1,0 +1,8 @@
+from demo.pcap | _path=="conn" OR _path=="ssl" |
+   count(_path=="conn"),
+   icert:=or(!(validation_status=="ok" OR validation_status==" " OR
+               validation_status=="" OR validation_status==null)),
+   maxdur:=max(duration),
+   tbytes:=sum(orig_bytes+resp_bytes),
+   tdur:=sum(duration)
+     by id.resp_h,id.orig_h
