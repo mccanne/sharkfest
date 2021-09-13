@@ -285,6 +285,8 @@ You will notice:
 
 Unlike JSON, Zed is statically type and _comprehensive_
 ```
+zq -Z values.zson
+
 {
         v1: 1,
         v2: 1.5,
@@ -293,9 +295,9 @@ Unlike JSON, Zed is statically type and _comprehensive_
         v5: 192.168.1.0/24,
         v6: [1,2,3],
         v7: [1(uint32),2(uint32),3(uint32)],
-        v8: |["HEADS","TAILS"]|,
+        v8: |["PUT","GET","POST"]|,
         v9: |{"key1":"value1","key2":"value2"}|,
-        //XXX more
+        v10: { a:1, r:{s1:"hello", s2:"world"}}
 }
 ```
 _It's hard to make things easy._
