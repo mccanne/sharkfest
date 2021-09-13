@@ -269,17 +269,53 @@ zq -Z values.zson
         v10: { a:1, r:{s1:"hello", s2:"world"}}
 }
 ```
-_It's hard to make things easy._
-
-But, let's follow Crockford's lead!
-
-Implied types!  Yeah!
-
-Then decorators.
-
-Data can be self-describing.  
+Notice:
+* mostly implied types (like JSON)
+* where needed, _type decorators_ in parens
+* data is self describing
 
 No need to define a schema first and shoehorn it all in.
+
+## Mixed-Type Arrays
+
+If ZSON is
+* a superset of JSON,
+* but also statically typed,
+* how do we handle mixed-type arrays?
+
+Let's just have a look:
+```
+echo '{ A:["hello",1,"world",true,2,false] }' | zq -Z -
+```
+Dynamic array types can be distilled into a static union type!
+```
+echo '{ A:["hello",1,"world",true,2,false] }' | zq -Z "cut typeof(A)" -
+```
+This gives `(int64,string,bool)`!
+* parentheses indicate a _union_ type
+* so this is type array of a union of `int64`, `string`, and `bool`
+
+The `typeof` operator can be applied to any field, e.g.,
+```
+zq -Z "cut t4:=typeof(v4), t5:=typeof(v5), t6:=typeof(v6)" values.zson
+```
+
+Is this important?
+* Unions rarely encountered in practice
+* But they can and do appear in JSON in the wild
+* And they are useful in _data shaping_ and _fusing_
+
+# First-class Types
+
+You may have noticed: Zed _types_ are Zed _values_
+
+Henri had this brilliant idea:
+```
+count() by typeof(this)
+```
+* This gives you a count of each _data shape_ in the input.
+* Super powerful tool for data introspection
+
 
 E.g., what is the "type" of this object or "record" in Zed terminology:
 ```
@@ -303,35 +339,24 @@ so we can cast the strings here into Zed native types...
 echo '{"a":"128.32.1.1","n":"10.0.0.1/8"}' | zq -Z "a:=ip(a),n:=net(n)" -
 ```
 
-## Union Types
+## The Zed Data Model
 
-The `typeof` operator can be applied to any field, e.g.,
-```
-echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut TYPE:=typeof(a)" -
-```
-This gives `[int64]` i.e., an array of `int64`.
+Note
 
-But JSON is dynamically typed whereas Zed is statically typed.
-What if field `a` had mixed types?
-```
-echo '{"a":[1,"hello",true]}' | zq -Z "cut TYPE:=typeof(a)" -
-```
-This gives `(int64,string,bool)`!
-* parentheses indicate a _union_ type
-* so this is type array of a union of `int64`, `string`, and `bool`
-
-Note: union types are essential in "shaping" and "fusing" values of different types.
-e.g.,
-```
 echo '{a:1,b:1} {a:"hello",b:2}' | zq -Z fuse -
 ```
 Note also that a sequence of records is valid ZSON so
 * no need to put them in an array like JSON
 * ZSON is also a _superset of NDJSON_
 
+The Zed data model is:
+```
+A sequence of statically typed, heterogeneous values
+```
+
 ## Zed is a Superset of Relational Tables
 
-Armed with a strong typing, we can tackle relational tables.
+Armed with this data model, we can tackle relational tables.
 
 Start with with a simple example:
 ```
@@ -364,7 +389,7 @@ The Zed language is a superset of SQL... ergonomics!
 
 zq -f table "SELECT name WHERE salary >= 250000" employee.zson
 
-A _table_ is just a Zed type.
+Note that a _table_ here is just a Zed type.
 
 Let's look at another table...
 ```
