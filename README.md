@@ -442,7 +442,7 @@ Since tables are just types, you can do JOINs too!
 zq -f table "SELECT e.name AS NAME, d.forecast AS FORECAST FROM employee e JOIN deal d ON e.name=d.name" tables.zson
 ```
 * You can aggregate too of course.  
-* Unlike SQL, Zed has sets and set operators
+* Unlike SQL, Zed has _sets_ and set operators
 ```
 zq -f table "SELECT e.name AS NAME, union(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" tables.zson
 ```
@@ -452,30 +452,19 @@ zq -z "SELECT e.name AS name, union(d.forecast) AS forecast FROM employee e JOIN
 ```
 The `|[ ... |]` syntax indicates a set.
 
-## Zed Format Family
+## ZSON Efficiency
 
+So, have I convinced you ZSON unifies the document and relational models?
 
+_Maybe_, but isn't this format incredibly inefficient compare to
+relational tables, Parquet, Avro, etc?
 
-Same for me, I felt like I discovered the Zed model and how the format
-families all elegantly fit together:
-* ZSON - human readable like JSON (what I've been showing here)
-* ZNG - performant, binary, compressed row-based format
-* ZST - performant, binary, compressed column-based format
+Like JSON, ZSON is horribly inefficient.
 
-register type Foo with the a schema registry get back a global ID.  Encode semi-structured into an efficient binary format and Bar-encoding tag it with ID.  Receiver fetches the Schema from the registry (and caches the binding) and decodes the Bar-encoding back to a Foo.
+What if we just adopted Parquet?  Let's have a look.
 
-Alternatively, send a verbose schema definition with every record...
+## Zed and Parquet
 
-There's a better (and seemingly obvious) approach.  Put the type system in the data stream but do so efficiently...
-
-Devil's in the details.  Getting type contexts right while being efficient was tricky but an elegant solution emerged Type Context
-
-
-```
-zq -o tables.zng tables.zson
-hexdump -C tables.zng
-```
-You want columnar, no problem!
 ```
 zq -f parquet -o tables.parquet tables.zng
 ```
@@ -488,26 +477,99 @@ Ok, we can fuse...
 ```
 zq -f parquet -o tables.parquet "fuse" tables.zng
 ```
-But _I had to change the data_ to shoehorn it into Parquet's assumption.
+But _I had to change the data_ to shoehorn it into Parquet's assumption:
+```
+zq -Z -i parquet sample tables.parquet
+```
+The data is different!
 
-ZST is different...
+The fundamental disconnect:
+* Parquet is a sequence of homogeneous records defined by a single schema
+* Zed is a sequence of self-describing, heterogeneous records
+
+## What about Avro?
+
+Avro has the same problem: a single schema defines the homoegenous sequence
+of records.
+
+Confluent solves this for Kafka with its _schema registry_.
+
+Here's a [diagram from stackoverflow](https://stackoverflow.com/questions/51609807/schema-registry-kafka-how-could-i-integrate-it-into-java-project):
+
+![Avro with Schema Registy](fig/59AMm.png)
+
+
+## Is there a better way?
+
+_It's hard to make things easy._
+
+> To make Zed efficient, we need to capture the notion of its self-describing
+> structure in an efficient, compact, binary representation.
+
+The new idea: a _type context_
+
+Inspired by Zeek TSV: put the schemas in the data!
+```
+#fields	ts              uid                     id.orig_h       id.orig_p ...
+#types  time            string                  addr            port      ...
+1521911721.255387	C8Tful1TvM3Zf5x8fl	10.164.94.120	39681 ...
+1521911721.411148	CXWfTK3LRdiuQxBbM6	10.47.25.80	50817 ...
+```
+
+(TODO: figure of record stream + type context)
+
+## ZNG: An efficient binary form of ZSON
+
+The type context subsumes the schema registry.
+
+```
+zq -f zng -o tables.zng tables.zson
+```
+
+## ZST: A Columnar Format for Zed
+
+Armed with the type context, a columnar structure can be derived where
+the columns self-organize around the type system
 * separation of schema-silo from data...
 * heterogeneous sequence of records _of any type_
 * columns self-organized around record types
 
-(picture of columns)
+(TODO: figure of ZST layout)
 
 ```
-zq -f zst -o tables.zst tables.zng
+zq -f zst tables.zson > tables.zst
 hexdump -C tables.zst
 ```
-You can see the string values of each column are stored sequentially.
+You can see the columnar layout in the hex dump.
 
 And the data didn't have to change to go into column format even
 retaining the orginal order of records...
 ```
  zq -i zst tables.zst
  ```
+
+## The Zed Format Family
+
+There you have it... the Zed format family
+
+* ZSON (like JSON) - human readable like JSON
+* ZNG (like Avro) - performant, binary, compressed record-based format
+* ZST (like Parquet) - performant, binary, compressed column-based format
+
+They are all perfectly compatible because they all adhere to the same
+data model: no loss of information transcoding between formats.
+
+```
+zq -i zst -f zng tables.zst > tables-recon.zng
+diff tables.zng tables-recon.zng
+```
+ZNG typically 5-10X smaller than ZSON/JSON (for large files)...
+```
+ls -lh tables.*
+ls -lh zeek.*
+```
+
+
 
 ## The Gentle Slope
 
