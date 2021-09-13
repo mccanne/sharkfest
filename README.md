@@ -71,7 +71,7 @@ transactionally consistent views across distributed workers.
 We realized there was an interesting problem to explore here beyond
 Zeek and Suricata
 * Not a typical, focused startup
-* A research effort
+* A multi-year, research effort
 * An open-source project
 
 We are just now transitioning from research to execution...
@@ -368,7 +368,7 @@ A sequence of statically typed, heterogeneous values
 
 Armed with this data model, we can tackle relational tables.
 
-Start with with a simple example:
+CSV is often used for tables, so here is a simple example:
 ```
 cat employee.csv
 zq -Z -i csv employee.csv
@@ -397,7 +397,9 @@ zq -f table  employee.zson
 
 The Zed language is a superset of SQL...
 
+```
 zq "SELECT name WHERE salary >= 250000" employee.zson
+```
 
 Note that a _table_ here is just a Zed type.
 
