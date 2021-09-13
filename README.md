@@ -58,18 +58,23 @@ transactionally consistent views across distributed workers.
 ## Getting Back in the Game!
 
 * Zed & Brim
+    * Search-like experience optimized for Zeek and Suricata
+        * Zeek
+        * Suricata
     * (quick demo of pcap drag into Brim)
-    * (pcaps/xxx.pcap)[pcaps/xxx.pcap]
 
 ![Brim App](fig/brim-grab.png)
 
 
 ## Our Research Team
 
-Pretty early on, we realized we weren't a typical startup
-maniacally focused on a go-to-market and instead embraced the idea that
-we'd take our time as a "research project"... we are just now transitioning
-from research to execution...
+We realized there was an interesting problem to explore here beyond
+Zeek and Suricata
+* Not a typical, focused startup
+* A research effort
+* An open-source project
+
+We are just now transitioning from research to execution...
 
 #### Front end
 * James Kerr
@@ -215,11 +220,13 @@ We have taken a very modular, "composable tools" approach
 > zed lake vs zed api
 
 Like the `docker` command, everything packaged under the `zed` command, though there
-are two shortcuts:
+are a couple shortcuts:
 * `zq` - `zed query` operates on files and streams
 * `zapi`- `zed api` client to talk to service
 
 ## A Zed Primer
+
+Zed unifies the document-model of JSON with the relational model of SQL tables.
 
 Let's start with JSON and we'll work our away over to relational tables.
 
@@ -253,6 +260,8 @@ echo '{"":1}' | zq -Z -
 ## Zed is statically typed
 
 Unlike JSON, Zed is statically type and _comprehensive_
+
+Here is a Zed record with a bunch of different types of values:
 ```
 zq -Z values.zson
 
@@ -274,13 +283,13 @@ zq -Z values.zson
 Notice:
 * mostly implied types (like JSON)
 * literal syntax is mostly unambiguous
-* where ambiguos, _type decorators_ in parens
+* where there is ambiguity, _type decorators_ given in parens
 
 Data is self describing.
 
 No need to define a schema first and shoehorn it all in.
 
-## Mixed-Type Arrays
+## A Challenge: Mixed-Type Arrays
 
 If ZSON is
 * a superset of JSON,
@@ -295,16 +304,16 @@ Dynamic array types can be distilled into a static union type!
 ```
 echo '{ A:["hello",1,"world",true,2,false] }' | zq -Z "cut typeof(A)" -
 ```
-This gives `(int64,string,bool)`!
+This gives `[(int64,string,bool)]`!
 * parentheses indicate a _union_ type
-* so this is type array of a union of `int64`, `string`, and `bool`
+* so this is type _array_ of a _union_ of `int64`, `string`, and `bool`
 
 Is all this important?
 * Unions rarely encountered in practice
 * But they can and do appear in JSON in the wild
 * And they are useful in _data shaping_ and _fusing_
 
-# First-class Types
+## First-class Types
 
 You may have noticed: Zed _types_ are Zed _values_
 
@@ -315,8 +324,7 @@ zq -Z "cut t5:=typeof(v5), t6:=typeof(v6), t7:=typeof(v7), t12:=typeof(v12)" val
 
 What is the type of a type?
 ```
-echo '{s:"hello"}' | zq -Z "cut typeof(s)" -
-echo '{s:"hello"}' | zq -Z "cut typeof(typeof(s))" -
+zq -Z "cut v5,T1:=typeof(v5) | T2:=typeof(T1)" values.zson
 ```
 It's type _type_, of course!
 
@@ -345,26 +353,8 @@ And you can sample a field too...
 zq -Z "sample id" zeek.zng
 ```
 
-The type of a type value is type _type_:
-```
-echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut typeof(typeof(this))" -
-```
-
-* These are _first-class types_
-* A powerful means for data discovery and introspection
-
-Zed also has all the expected data types, e.g., IP addresses, networks,
-so we can cast the strings here into Zed native types...
-```
-echo '{"a":"128.32.1.1","n":"10.0.0.1/8"}' | zq -Z "a:=ip(a),n:=net(n)" -
-```
-
 ## The Zed Data Model
 
-Note
-
-echo '{a:1,b:1} {a:"hello",b:2}' | zq -Z fuse -
-```
 Note also that a sequence of records is valid ZSON so
 * no need to put them in an array like JSON
 * ZSON is also a _superset of NDJSON_
@@ -462,21 +452,13 @@ The `|[ ... |]` syntax indicates a set.
 
 ## Zed Format Family
 
-## How'd we Get Here?
 
-There were lots of blind alleys and restarts.
-
-Along the way,
-I felt just like [Crockford who famously said:](https://www.youtube.com/watch?v=-C-JoyNuQJs)
-
-> "I discovered JSON.  I do not claimed to have invented it."
 
 Same for me, I felt like I discovered the Zed model and how the format
 families all elegantly fit together:
 * ZSON - human readable like JSON (what I've been showing here)
 * ZNG - performant, binary, compressed row-based format
 * ZST - performant, binary, compressed column-based format
-
 
 register type Foo with the a schema registry get back a global ID.  Encode semi-structured into an efficient binary format and Bar-encoding tag it with ID.  Receiver fetches the Schema from the registry (and caches the binding) and decodes the Bar-encoding back to a Foo.
 
@@ -525,13 +507,19 @@ retaining the orginal order of records...
  zq -i zst tables.zst
  ```
 
-## Zed Type Context
+## The Gentle Slope
 
-Show how type context works in ZNG
+(go back to app)
 
-Show how type context drives columnar structure in ZST.
+This all sounds really complicated...
 
-(contrast with systems that clean up data and store as parquet)
+_It's hard to make things easy._
+
+The _gentle slope_:
+* Zed is like JSON
+* Zed is just a search language
+* Easy to dip your toes in
+    * But the more you learn, the more power you unlock
 
 ## Zed Inspired by Zeek
 
@@ -625,7 +613,7 @@ Policy may then dictate:
 
 ## Zed in the App
 
-## threat intel join example / workflow
+## threat intel join example / workflow to illustate lake/app connection
 
 ## join on "this" example...?
 
@@ -675,6 +663,15 @@ ERGONOMICS
 
 * I can't explain it with words
 * You just have to dip your toes in and try it out...
+
+## Discovered not Invented
+
+There were lots of blind alleys and restarts.
+
+Along the way,
+I felt just like [Crockford who famously said:](https://www.youtube.com/watch?v=-C-JoyNuQJs)
+
+> "I discovered JSON.  I do not claimed to have invented it."
 
 
 ## Bio
