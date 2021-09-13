@@ -260,19 +260,23 @@ zq -Z values.zson
         v1: 1,
         v2: 1.5,
         v3: 1 (uint8),
-        v4: 192.168.1.1,
-        v5: 192.168.1.0/24,
-        v6: [1,2,3],
-        v7: [1(uint32),2(uint32),3(uint32)],
-        v8: |["PUT","GET","POST"]|,
-        v9: |{"key1":"value1","key2":"value2"}|,
-        v10: { a:1, r:{s1:"hello", s2:"world"}}
+        v5: 2018-03-24T17:30:20.600852Z,
+        v6: 2m30s,
+        v7: 192.168.1.1,
+        v8: 192.168.1.0/24,
+        v9: [1,2,3],
+        v10: [1(uint32),2(uint32),3(uint32)],
+        v11: |["PUT","GET","POST"]|,
+        v12: |{{"key1","value1"},{"key2","value2"}}|,
+        v13: { a:1, r:{s1:"hello", s2:"world"}}
 }
 ```
 Notice:
 * mostly implied types (like JSON)
-* where needed, _type decorators_ in parens
-* data is self describing
+* literal syntax is mostly unambiguous
+* where ambiguos, _type decorators_ in parens
+
+Data is self describing.
 
 No need to define a schema first and shoehorn it all in.
 
@@ -295,12 +299,7 @@ This gives `(int64,string,bool)`!
 * parentheses indicate a _union_ type
 * so this is type array of a union of `int64`, `string`, and `bool`
 
-The `typeof` operator can be applied to any field, e.g.,
-```
-zq -Z "cut t4:=typeof(v4), t5:=typeof(v5), t6:=typeof(v6)" values.zson
-```
-
-Is this important?
+Is all this important?
 * Unions rarely encountered in practice
 * But they can and do appear in JSON in the wild
 * And they are useful in _data shaping_ and _fusing_
@@ -309,21 +308,42 @@ Is this important?
 
 You may have noticed: Zed _types_ are Zed _values_
 
-Henri had this brilliant idea:
+The `typeof` operator can be applied to any field, e.g.,
+```
+zq -Z "cut t5:=typeof(v5), t6:=typeof(v6), t7:=typeof(v7), t12:=typeof(v12)" values.zson
+```
+
+What is the type of a type?
+```
+echo '{s:"hello"}' | zq -Z "cut typeof(s)" -
+echo '{s:"hello"}' | zq -Z "cut typeof(typeof(s))" -
+```
+It's type _type_, of course!
+
+Given first-class types, Henri had this brilliant idea:
 ```
 count() by typeof(this)
 ```
 * This gives you a count of each _data shape_ in the input.
 * Super powerful tool for data introspection
 
-
-E.g., what is the "type" of this object or "record" in Zed terminology:
+Let's try this out on some Zeek logs:
 ```
-echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z "cut typeof(this)" -
+zq -Z "count() by typeof(this)" zeek.zng
 ```
-`this` refers to each input record in sequence.
-This creates a new record with one field `typeof` whose value is a
-_type value_ indicating the type signature of the input.
+Ok, that's powerful but it would be more intuitive to see a sample
+value of each type...  you can use the _any_ aggregator!
+```
+zq -Z "any(this) by typeof(this) | cut any" zeek.zng
+```
+We love this so much we call it _sample_:
+```
+zq -Z "sample" zeek.zng
+```
+And you can sample a field too...
+```
+zq -Z "sample id" zeek.zng
+```
 
 The type of a type value is type _type_:
 ```
@@ -372,7 +392,7 @@ Let's clean that up...
 ```
 zq -Z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv
 ```
-Let's save in a new file...
+and save cleaned data in a new file...
 ```
 zq -z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv > employee.zson
 ```
@@ -383,11 +403,11 @@ zq -f table  employee.zson
 
 ## Relational Zed
 
-The Zed language is a superset of SQL... ergonomics!
-
 > Note: SQL support is currently experimental and early
 
-zq -f table "SELECT name WHERE salary >= 250000" employee.zson
+The Zed language is a superset of SQL...
+
+zq "SELECT name WHERE salary >= 250000" employee.zson
 
 Note that a _table_ here is just a Zed type.
 
