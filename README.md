@@ -231,8 +231,8 @@ echo "..." | zq -Z -
 ```
 Leverage the simplicity of JSON.
 * Zed is a superset of JSON
-
-E.g., this command will convert the given object into "Zed":
+* The human-readable form of Zed is called ZSON
+* E.g., take Zed as input and pretty-print it:
 ```
 echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z -
 ```
@@ -240,6 +240,15 @@ You will notice:
 * don't need (but can have) quotes around field names
 * otherwise, very familiar
 * at the same time, very different
+
+Field quotes needed only when there are special characters:
+```
+echo '{"funny@name":1}' | zq -Z -
+```
+Fully compatible with JSON:
+```
+echo '{"":1}' | zq -Z -
+```
 
 ## Zed is statically typed
 
