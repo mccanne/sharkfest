@@ -591,6 +591,62 @@ Easy to dip your toes in...
 * if you know, SQL type SQL
 * you can also also
 
+## Unbundling
+## What about the PCAPs?
+
+Enter `brimcap`
+
+```
+      type port=uint16;
+      type alert = {
+        timestamp: time,
+        event_type: bstring,
+        src_ip: ip,
+        src_port: port,
+        dest_ip: ip,
+        dest_port: port,
+        vlan: [uint16],
+        proto: bstring,
+        app_proto: bstring,
+        alert: {
+          severity: uint16,
+          signature: bstring,
+          category: bstring,
+          action: bstring,
+          signature_id: uint64,
+          gid: uint64,
+          rev: uint64,
+          metadata: {
+            signature_severity: [bstring],
+            former_category: [bstring],
+            attack_target: [bstring],
+            deployment: [bstring],
+            affected_product: [bstring],
+            created_at: [bstring],
+            performance_impact: [bstring],
+            updated_at: [bstring],
+            malware_family: [bstring],
+            tag: [bstring]
+          }
+        },
+        flow_id: uint64,
+        pcap_cnt: uint64,
+        tx_id: uint64,
+        icmp_code: uint64,
+        icmp_type: uint64,
+        tunnel: {
+          src_ip: ip,
+          src_port: port,
+          dest_ip: ip,
+          dest_port: port,
+          proto: bstring,
+          depth: uint64
+        },
+        community_id: bstring
+      }
+      filter event_type=="alert" | put this := shape(alert) | rename ts := timestamp
+```
+
 Open area of work:
 * How to leverage the Zed data model in the UI?
 * Elegant UX for data instrospection and shaping
@@ -604,6 +660,13 @@ But we need to deal with messy data today...
 * Show how we shape suricata...
 
 ## The Zed Lake
+
+With unblunding, we then expose the power and scale of the Zed Lake.
+
+When Brim launches, it forks a Zed service in the background...
+* manages a local lake
+* open REST API
+* everything the app does, the `zed api` command can do (`zapi` for short)
 
 gentle slope: git-like design pattern
 
