@@ -77,9 +77,13 @@ While the PCAP is loading, here is the wiring behind the scenes...
 
 * Brim is
     * A search tool
+        * `160.176.58.77` - search of an IP
+        * `181.42.0.0/16` - search for IPs in a network
         * `weird` - show me Zeek's weird logs
         * cut and paste a UID back in the search bar
     * An analytics engine
+        * `count() by network_of(id.resp_h)`
+        * `count() by query`
         * `count() by _path`
         * `every 10s count() by _path`
             * (try different intervals)
@@ -109,7 +113,7 @@ We realized there was an interesting problem to explore here beyond
 Zeek and Suricata
 * Not a typical startup
 * A multi-year, research effort
-* An open-source project
+* _Creation of_ open-source project rather than _commercialization_
 
 We are just now transitioning from research to execution...
 
@@ -371,11 +375,12 @@ zq -Z "cut v5,T1:=typeof(v5) | T2:=typeof(T1)" values.zson
 ```
 It's type _type_, of course!
 
-Given first-class types, Henri had this brilliant idea:
+Given first-class types, Henri had a brilliant idea:
 ```
 count() by typeof(this)
 ```
-* This gives you a count of each _data shape_ in the input.
+* _this_ refers to the current record in a declarative fashion
+* Herem we count each unique _data shape_ in the input
 * Super powerful tool for data introspection
 
 Let's try this out on some Zeek logs:
@@ -519,7 +524,7 @@ to apply data warehouse-style columnar formats to semi-structured data.
 We actually support Parquet inside of Zed so let's just reformat
 our table data as Parquet:
 ```
-zq -f parquet -o tables.parquet tables.zng
+zq -f parquet -o tables.parquet tables.zson
 ```
 Oops, that didn't work
 * Have to specify schema before you can write to the format
@@ -528,11 +533,15 @@ Oops, that didn't work
 
 So, we can fuse...
 ```
-zq -f parquet -o tables.parquet "fuse" tables.zng
+zq -f parquet -o tables.parquet "fuse" tables.zson
 ```
 But _I had to change the data_ to shoehorn it into Parquet's assumption:
 ```
 zq -Z -i parquet sample tables.parquet
+```
+versus
+```
+zq -Z sample tables.zson
 ```
 The data is different!
 
