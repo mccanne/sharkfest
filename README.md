@@ -45,6 +45,8 @@ transactionally consistent views across distributed workers.
 
 ## Introduction
 
+> Feel free to follow along at [https://github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest)
+
 * Some ancient history: PCAP, BPF, tcpdump
 * Ten years ago: Stanford Sharkfest '11 and Riverbed
 * Present: Brim and Zed
@@ -57,6 +59,8 @@ transactionally consistent views across distributed workers.
 
 ## Zed & Brim
 
+* [https://github.com/brimdata/brim](https://github.com/brimdata/brim)
+* [https://github.com/brimdata/zed](https://github.com/brimdata/zed)
 * Search-like experience optimized for Zeek and Suricata
     * [Zeek](https://zeek.org/) - maps packets to contectual logs
     * [Suricata](https://suricata.io/) - threat detections engine
