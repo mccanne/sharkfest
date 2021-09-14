@@ -59,8 +59,9 @@ transactionally consistent views across distributed workers.
 
 ## Zed & Brim
 
-* [github.com/brimdata/brim](https://github.com/brimdata/brim)
-* [github.com/brimdata/zed](https://github.com/brimdata/zed)
+* We are committed to open source
+    * [github.com/brimdata/brim](https://github.com/brimdata/brim)
+    * [github.com/brimdata/zed](https://github.com/brimdata/zed)
 * Search-like experience optimized for Zeek and Suricata
     * [Zeek](https://zeek.org/) - maps packets to contectual logs
     * [Suricata](https://suricata.io/) - threat detections engine
@@ -74,6 +75,33 @@ While the PCAP is loading, here is the wiring behind the scenes...
 
 ![App Architecture](fig/app-arch.png)
 
+* Brim is
+    * A search tool
+        * `weird` - show me Zeek's weird logs
+        * cut and paste a UID back in the search bar
+    * An analytics engine
+        * `count() by _path`
+        * `every 10s count() by _path`
+            * (try different intervals)
+            * This is the query the app uses to create the bar chart.
+        * `count() by id`
+            * Hey, what's the junk?
+            * Why are the column headers gone?
+            * Zed is very forgiving: Zeek uses `id` for different things.
+        * Fix: `type port=uint16 ; is(id,type({orig_h:ip,orig_p:port,resp_h:ip,resp_p:port})) | count() by id`
+            * Not your typical query, but shows the power of Zed
+        * If you're curious what's the junk that uses id in other ways...
+            * Fix: `type port=uint16 ; has(id) !is(id,type({orig_h:ip,orig_p:port,resp_h:ip,resp_p:port})) | count() by _path`
+    * A learning tool (_It's hard to make things easy_)
+        * Right-click filter by
+        * Right-click count by
+        * Right-click on pivot to logs
+        * Click on column header
+    * A security skin
+        * Click on conn to show Zeek details
+        * Click on Suricata Alerts query
+    * A wireshark navigator
+        * Click to packets
 
 ## Our Research Team
 
@@ -186,7 +214,7 @@ But there's another catch...
 
 And why do you want to manage two different systems?
 
-(TODO: figure of breakage)
+![Bifurcated Search/Analytics](fig/bifurcated.png)
 
 ## Policy & Mechanism
 
@@ -213,17 +241,17 @@ _It's hard to make things easy._
 
 What if _the mechanism_ were _self-describing data_:
 
-* A comprehensive type system
-* First-class types
-* Type-adaptive operators
+* A comprehensive type system instead of top-level schemas
+* First-class types to enable "schemas as values"
+* Type-adaptive entities instead of fixed schemas
 
 And what if _the policy_ were enforced externally by the _type system_?
 
-Then, a schema is simply a special case of a record type...
+Here, a schema is simply a special case of a record type...
 
 ## Composable Tools
 
-Before talking about the data model, let me outline the tools.
+_Switching gears_: I'll use our tooling to motivate the Zed data model.
 
 We have taken a very modular, "composable tools" approach
 * CLI tools written in [Go](https://golang.org/)
@@ -290,7 +318,7 @@ zq -Z values.zson
         v8: 192.168.1.0/24,
         v9: [1,2,3],
         v10: [1(uint32),2(uint32),3(uint32)],
-        v11: |["PUT","GET","POST"]|,
+        v11: |["PUT","GET","POST"]| (=HTTP_Methods),
         v12: |{{"key1","value1"},{"key2","value2"}}|,
         v13: { a:1, r:{s1:"hello", s2:"world"}}
 }
@@ -334,7 +362,7 @@ You may have noticed: Zed _types_ are Zed _values_
 
 The `typeof` operator can be applied to any field, e.g.,
 ```
-zq -Z "cut t5:=typeof(v5), t6:=typeof(v6), t7:=typeof(v7), t12:=typeof(v12)" values.zson
+zq -Z "cut t5:=typeof(v5), t6:=typeof(v6), t7:=typeof(v7), t11:=typeof(v11)" values.zson
 ```
 
 What is the type of a type?
@@ -566,7 +594,7 @@ the columns self-organize around the type system
 * heterogeneous sequence of records _of any type_
 * columns self-organized around record types
 
-(TODO: figure of ZST layout)
+![ZST Layout](fig/zst.png)
 
 ```
 zq -f zst tables.zson > tables.zst
@@ -584,9 +612,9 @@ retaining the orginal order of records...
 
 There you have it... the Zed format family
 
-* ZSON (like JSON) - human readable like JSON
-* ZNG (like Avro) - performant, binary, compressed record-based format
-* ZST (like Parquet) - performant, binary, compressed column-based format
+* [ZSON](https://github.com/brimdata/zed/blob/main/docs/formats/zson.md) (like JSON) - human readable like JSON
+* [ZNG](https://github.com/brimdata/zed/blob/main/docs/formats/zng.md) (like Avro) - performant, binary, compressed record-based format
+* [ZST](https://github.com/brimdata/zed/blob/main/docs/formats/zst.md) (like Parquet) - performant, binary, compressed column-based format
 
 They are all perfectly compatible because they all adhere to the same
 data model: no loss of information transcoding between formats.
@@ -608,7 +636,7 @@ When Brim launches, it forks a `zed service` in the background...
 * manages a local data store
 * everything the app does, the `zed api` command can do (`zapi` for short)
 
-(TODO figure out Brim with local store)
+(TODO figure of Brim with local store)
 
 We think of the storage as a lake, somewhere in between relational tables
 and semi-structured search.
