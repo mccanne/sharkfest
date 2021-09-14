@@ -467,12 +467,12 @@ Like JSON, ZSON is horribly inefficient.
 
 Surely this must be a solved problem?!
 
-What if we just used Avro and Parquet?
-
-* Avro came out of the Hadoop community as an efficient representation of
-semi-structured, binary data compared to JSON or CSV
-* Parquet came from Google's Dremel paper to apply data warehouse-style columnar
-formats to semi-structured data.
+* [Avro](https://avro.apache.org/) came out of the Hadoop ecosystem
+as an efficient representation of semi-structured, binary data compared
+to JSON or CSV
+* [Parquet](https://parquet.apache.org/) came from
+Google's [Dremel paper](https://research.google/pubs/pub36632/)
+to apply data warehouse-style columnar formats to semi-structured data.
 
 ## Zed and Parquet
 
@@ -483,7 +483,7 @@ zq -f parquet -o tables.parquet tables.zng
 ```
 Oops, that didn't work
 * Have to specify schema before you can write to the format
-* Schema must be same for all rows
+* Schema must be same for all records in the file
 * Policy and mechanism intertwined
 
 So, we can fuse...
