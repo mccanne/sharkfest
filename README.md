@@ -55,13 +55,12 @@ transactionally consistent views across distributed workers.
 
 ![Summary Slide from 2011](fig/summary-2011.png)
 
-## Getting Back in the Game!
+## Zed & Brim
 
-* Zed & Brim
-    * Search-like experience optimized for Zeek and Suricata
-        * Zeek
-        * Suricata
-    * (quick demo of pcap drag into Brim)
+* Search-like experience optimized for Zeek and Suricata
+    * [Zeek](https://zeek.org/) - maps packets to contectual logs
+    * [Suricata](https://suricata.io/) - threat detections engine
+* (quick demo of pcap drag into Brim)
 
 ![Brim App](fig/brim-grab.png)
 
@@ -115,7 +114,7 @@ Works great for many simple uses cases.
 
 But the simplicity of JSON is a double-edged sword
 * limited data types (object, array, string, number, bool, null)
-* no schemas in JSON (though there is JSON Schema)
+* no schemas in JSON ([JSON Schema](https://json-schema.org/) can be bolted on)
 * suboptimal format for scaleable analytics
 
 For example, the Zeek TSV log format is rich and structured.
@@ -262,7 +261,7 @@ echo '{"":1}' | zq -Z -
 
 Unlike JSON, Zed is statically type and _comprehensive_
 
-Here is a Zed record with a bunch of different types of values:
+Here is a ZSON record with a bunch of different types of values:
 ```
 zq -Z values.zson
 
@@ -463,19 +462,28 @@ relational tables, Parquet, Avro, etc?
 
 Like JSON, ZSON is horribly inefficient.
 
-What if we just adopted Parquet?  Let's have a look.
+Surely this must be a solved problem?!
+
+What if we just used Avro and Parquet?
+
+* Avro came out of the Hadoop community as an efficient representation of
+semi-structured, binary data compared to JSON or CSV
+* Parquet came from Google's Dremel paper to apply data warehouse-style columnar
+formats to semi-structured data.
 
 ## Zed and Parquet
 
+We actually support Parquet inside of Zed so let's just reformat
+our table data as Parquet:
 ```
 zq -f parquet -o tables.parquet tables.zng
 ```
 Oops, that didn't work
-* Policy and mechanism intermixed again
 * Have to specify schema before you can write to the format
-* Schema same for all rows
+* Schema must be same for all rows
+* Policy and mechanism intertwined
 
-Ok, we can fuse...
+So, we can fuse...
 ```
 zq -f parquet -o tables.parquet "fuse" tables.zng
 ```
@@ -500,6 +508,11 @@ Here's a [diagram from stackoverflow](https://stackoverflow.com/questions/516098
 
 ![Avro with Schema Registy](fig/59AMm.png)
 
+This is ok, but either
+* you send the schema with every value, or
+* you have this clunky interaction with a schema registry.
+
+This is not the Zed data model...
 
 ## Is there a better way?
 
@@ -517,6 +530,8 @@ Inspired by Zeek TSV: put the schemas in the data!
 1521911721.255387	C8Tful1TvM3Zf5x8fl	10.164.94.120	39681 ...
 1521911721.411148	CXWfTK3LRdiuQxBbM6	10.47.25.80	50817 ...
 ```
+
+Like Avro but with embedded, incremental fine-grained type bindings...
 
 (TODO: figure of record stream + type context)
 
@@ -573,14 +588,15 @@ ls -lh zeek.*
 
 ## The Zed Lake
 
-(RELATIONAL FIRST... THEN JOINS?)
-
-With unbundling, we then expose the power and scale of the Zed Lake.
-
-When Brim launches, it forks a Zed service in the background...
-* manages a local lake
-* open REST API
+When Brim launches, it forks a `zed service` in the background...
+* bundle the `zq` engine
+* manages a local data store
 * everything the app does, the `zed api` command can do (`zapi` for short)
+
+(TODO figure out Brim with local store)
+
+We think of the storage as a lake, somewhere in between relational tables
+and semi-structured search.
 
 gentle slope: git-like design pattern
 
@@ -691,7 +707,7 @@ zapi query -use demo.pcap@main -I graph.zed | zapi load -use NetGraph@main -
 
 Say you had a list of badguys...
 ```
-head -10 badguys.zson
+zq badguys.zng
 ```
 And you wanted to decorate your logs that had an IP in this list.
 
