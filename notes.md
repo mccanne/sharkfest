@@ -109,3 +109,32 @@ In this talk I'll describe the recent work I've been doing on a new data model c
 * built-in help is limited/missing
 * binaries are put in build/dist, build/dist/suricata, build/dist/zeek
 * no make install, instead make build
+
+===
+
+
+Takeaways
+
+It's hard to make things easy ...
+* Separate of policy from mechanism
+* The gentle slope
+    * Data as easy as JSON or as complex as you would like
+    * Query language as easy as Google as rich as SQL
+    * Git-like Zed Lake
+* Easy data shaping
+    * Types as first-class values
+    * Type unions
+    * Rich casting operators
+* Scale from desk to CLI to cloud
+
+* Separate of policy/mechanism in data engineering
+* Superset of JSON, relational tables
+* Intuitive data shaping with first-class types
+* Leverages the familiar Git design pattern
+* Nice, intuitive UX in App, in API, in CLI commands
+
+* Committed to open source
+    * [github.com/brimdata/brim](http://github.com/brimdata/brim)
+    * [github.com/brimdata/zed](http://github.com/brimdata/zed)
+* Public slack
+* Follow us on Twitter

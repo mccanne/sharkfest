@@ -792,16 +792,12 @@ But okay, it's looks good so merge branch `test` into `main`!
 ```
 zapi merge main
 ```
-
 > New check app and see the records...
 
 
-But we need to deal with messy data today...
-* Zed types tame the problem
-* Zed types make shaping easier
-* Show how we shape suricata...
-
 ## Live Ingest
+
+> Skip if short on time.
 
 A main/live branching model for streaming pipelines... work in progress.
 
@@ -818,7 +814,7 @@ A main/live branching model for streaming pipelines... work in progress.
 
 > Skip if short on time.
 
-Now you can see the separation:
+Zed separates _format mechanism_ from _schema policy_:
 * You don't have to think about types _before you put data in Zed_
 * You can shape the data whenever however you want
 * You can this with the same format, in the same place
@@ -834,10 +830,13 @@ Policy may then dictate:
 
 ## Wrap Up
 
-Vision: clients will someday somehow express their data in
-a format like Zed (like Zeek does!)
+Vision
+* Clients will someday somehow express their data in a format like Zed (like Zeek does)
+* But we fit into the world as it exists with support for integrations.
 
-Take-away: first-class types holds promive to improve the ergonomic means
+Does our key take-away make sense now?
+
+> A type system is a powerful way to improve the ergnomics of data engineering
 
 Security and packets have been a really important use case and we
 intend to continue to work the community on this front
@@ -845,77 +844,25 @@ intend to continue to work the community on this front
 End with pitch for help... we're focused on data platform and modular tools.
 We'd love for community to get involved.
 
-As we worked through all this over the past two years,
-I felt just like [Crockford who famously said](https://www.youtube.com/watch?v=-C-JoyNuQJs)
-
-> I discovered JSON.  I do not claimed to have invented it.
-
-Takeaways
-
-It's hard to make things easy ...
-* Separate of policy from mechanism
-* The gentle slope
-    * Data as easy as JSON or as complex as you would like
-    * Query language as easy as Google as rich as SQL
-    * Git-like Zed Lake
-* Easy data shaping
-    * Types as first-class values
-    * Type unions
-    * Rich casting operators
-* Scale from desk to CLI to cloud
-
-* Separate of policy/mechanism in data engineering
-* Superset of JSON, relational tables
-* Intuitive data shaping with first-class types
-* Leverages the familiar Git design pattern
-* Nice, intuitive UX in App, in API, in CLI commands
-
-* Committed to open source
-    * [github.com/brimdata/brim](http://github.com/brimdata/brim)
-    * [github.com/brimdata/zed](http://github.com/brimdata/zed)
-* Public slack
-* Follow us on Twitter
-
-With unbundling, we then expose the power and scale of the Zed Lake.
-
-When Brim launches, it forks a Zed service in the background...
-* manages a local lake
-* open REST API
-* everything the app does, the `zed api` command can do (`zapi` for short)
-
-gentle slope: git-like design pattern
-
 Easy to dip your toes in...
 
-## TODO: integrate these ideas into wrap-up... The "A Ha" Moment
+From one of our community users...
 
-When we really started working on this problem, we realized we were working
-not on a security app, per se, but a fundamental data model problem.
-
-It's hard to make things easy...
+_ Once my data is in ZNG, everything is easy..."
 
 * A _gentle slope_ throughout
 * Lightweight, desktop-scale to large and more complex cloud deployment
-* Things just work
+* Things "just work"
 
 We spend a lot of time fussing over the details, so if you find something
 complicated or surprising, let us know and we'll try to fix!
 
-ERGONOMICS
-
-* "Once my data is in ZNG, everything is easy..."
-
-* I can't explain it with words
+* Hard to explain it all with words and demos...
 * You just have to dip your toes in and try it out...
-
-## Discovered not Invented
 
 There were lots of blind alleys and restarts.
 
-Along the way,
-I felt just like [Crockford who famously said:](https://www.youtube.com/watch?v=-C-JoyNuQJs)
-
-> "I discovered JSON.  I do not claimed to have invented it."
+> "I did not invent --- but rather discovered --- Zed.
 
 ## Bio
 
