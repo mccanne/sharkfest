@@ -69,7 +69,7 @@ transactionally consistent views across distributed workers.
 
 We realized there was an interesting problem to explore here beyond
 Zeek and Suricata
-* Not a typical, focused startup
+* Not a typical startup
 * A multi-year, research effort
 * An open-source project
 
@@ -116,6 +116,9 @@ But the simplicity of JSON is a double-edged sword
 * limited data types (object, array, string, number, bool, null)
 * no schemas in JSON ([JSON Schema](https://json-schema.org/) can be bolted on)
 * suboptimal format for scaleable analytics
+
+The more we worked on this problem, the more we were pulled in by the
+Zeek data model.
 
 For example, the Zeek TSV log format is rich and structured.
 ```
