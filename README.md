@@ -45,13 +45,13 @@ transactionally consistent views across distributed workers.
 
 ## Introduction
 
-> Feel free to follow along at [https://github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest)
+> Feel free to follow along at [github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest)
 
 * Some ancient history: PCAP, BPF, tcpdump
 * Ten years ago: Stanford Sharkfest '11 and Riverbed
 * Present: Brim and Zed
-    * Stumbling on a new data model through PCAP hacking
-    * Like [Crockford](https://youtu.be/-C-JoyNuQJs?t=20), _discovered_ not _invented_
+    * Zed: stumbling on a new data model through PCAP hacking
+    * Like [Crockford](https://youtu.be/-C-JoyNuQJs?t=20), Zed was _discovered_ not _invented_
 
 ## Sharkfest '11
 
@@ -59,14 +59,20 @@ transactionally consistent views across distributed workers.
 
 ## Zed & Brim
 
-* [https://github.com/brimdata/brim](https://github.com/brimdata/brim)
-* [https://github.com/brimdata/zed](https://github.com/brimdata/zed)
+* [github.com/brimdata/brim](https://github.com/brimdata/brim)
+* [github.com/brimdata/zed](https://github.com/brimdata/zed)
 * Search-like experience optimized for Zeek and Suricata
     * [Zeek](https://zeek.org/) - maps packets to contectual logs
     * [Suricata](https://suricata.io/) - threat detections engine
 * (quick demo of pcap drag into Brim)
 
 ![Brim App](fig/brim-grab.png)
+
+## The Desktop Architecture
+
+While the PCAP is loading, here is the wiring behind the scenes...
+
+![App Architecture](fig/app-arch.png)
 
 
 ## Our Research Team
@@ -97,6 +103,8 @@ We are just now transitioning from research to execution...
 * Joe Hellerstein
 
 ## Why not JSON + Elastic?
+
+This looks a lot like ELK...
 
 Douglas Crockford: [JSON](https://www.json.org/json-en.html)
 * Just send a javascript data structure to a javascript entity
