@@ -48,14 +48,24 @@ transactionally consistent views across distributed workers.
 > Feel free to follow along at [github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest)
 
 * Some ancient history: PCAP, BPF, tcpdump
-* Ten years ago: Stanford Sharkfest '11 and Riverbed
-* Present: Brim and Zed
+* Ten years ago: [Stanford Sharkfest '11](https://sharkfestus.wireshark.org/sf11) and Riverbed
+* Present: [Brim](https://github.com/brimdata/brim) and [Zed](https://github.com/brimdata/zed)
     * Zed: stumbling on a new data model through PCAP hacking
     * Like [Crockford](https://youtu.be/-C-JoyNuQJs?t=20), Zed was _discovered_ not _invented_
 
 ## Sharkfest '11
 
 ![Summary Slide from 2011](fig/summary-2011.png)
+
+## Key Takeaway
+
+This won't make sense right now, but the key, new technical idea I want to get across is:
+
+> A type system is a powerful way to improve the erognomics of data engineering
+
+To this end, we will introduce:
+* First-class types in the data model, and
+* Type-oriented operators in the query language.
 
 ## Zed & Brim
 
@@ -72,6 +82,7 @@ transactionally consistent views across distributed workers.
 ## The Desktop Architecture
 
 While the PCAP is loading, here is the wiring behind the scenes...
+* Data organized into "pools" like Mongo _collections_
 
 ![App Architecture](fig/app-arch.png)
 
@@ -140,11 +151,11 @@ This looks a lot like ELK...
 
 Douglas Crockford: [JSON](https://www.json.org/json-en.html)
 * Just send a javascript data structure to a javascript entity
-* _So much easier_ than XML, SOAP, RPC
+* JSON APIs proliferate: _so much easier_ than XML, SOAP, RPC
 * And [node.js](https://nodejs.org) arrived on the backend and we had _full stack_
 
 Shay Banon: [Elastic](https://github.com/elastic)
-* Wrap [Lucene Java lib](https://lucene.apache.org/) in a REST API
+* Wrap [Lucene Java lib](https://lucene.apache.org/) in a REST API and shard indexes
 * Post JSON docs to API
 * Submit JSON search queries to API
 
@@ -638,87 +649,69 @@ ls -lh tables.*
 ls -lh zeek.*
 ```
 
+## Zed through the Lense of Brim
+
+Have another look now...
+* drag `tables.zng` into a new data pool
+    * Click on relational queries
+    * Show Zed versions
+    * SQL just a Zed expression: mixture of SQL and Zed
+* Open `demo.pcap` tab
+    * Note lack of column headers
+    * Pivot to `HTTP Requests` query and back
+    * Pivot to `Suricata Alerts` query and back
+* A UX challenge: mixed vs uniform records & shapes
+    * Click on Buggy Zed query
+        * Problem in current app
+        * Not handling unions quite right yet (coming see)
+        * Loss of column headers confusing to users
+
+Idea: _show "shapes" as icons of diverse records when columns headers go_
+
+> We believe designing UX for Zed is a rich and interesting area of work.
+> To our knowledge, this idea hasn't really been explored, likely due to the
+> siloed biased amidst existing data models.
+
 ## The Zed Lake
 
-When Brim launches, it forks a `zed service` in the background...
-* bundle the `zq` engine
-* manages a local data store
-* everything the app does, the `zed api` command can do (`zapi` for short)
+Okay, final chapter of the talk: How do we leverage the Zed data model at
+scale?
 
-(TODO figure of Brim with local store)
+Enter the Zed Lake.
 
-We think of the storage as a lake, somewhere in between relational tables
-and semi-structured search.
+(TODO figure of Brim App talking beyond desktop lake)
 
-gentle slope: git-like design pattern
+## Native cloud design
+
+Built on a cloud storage model...
+* No use of costly key lookups
+* Objects are stored as ZNG/ZST, immutable, and have globally unique name
+* Search indexes are just ZNG objects (with simple b-tree indexing)
+* All state changes to the lake view stored in a transaction journal
+
+The Zed lake is somewhere in between a set of relational tables
+and document store for semi-structured search.
+
+## Attractive Properties
+
+* Easy caching
+    * Workers can cache _everything_ since since everything is immutable and has a globally unique name
+* No zookeeper
+    * Cloud storage semantics provide consistency
+    * Workers can do a consistency check with a single object lookup (one RTT)
+* Data objects and commit objects stored separately
+    * Easy versioning, backup, and retention policies
+    * Time travel via commit history
+
+## The Git Design Pattern
+
+We realized many compelling use cases could be supported by a Git-like
+model for the Zed lake.
 
 ![Git Storage Model](fig/git-model.png)
 
-
-* go back to Zeek/Suricata
-* drag in tables.zng
-* if you know, SQL type SQL
-* you can also also
-
-## Unbundling
-## What about the PCAPs?
-
-Enter `brimcap`
-
-```
-      type port=uint16;
-      type alert = {
-        timestamp: time,
-        event_type: bstring,
-        src_ip: ip,
-        src_port: port,
-        dest_ip: ip,
-        dest_port: port,
-        vlan: [uint16],
-        proto: bstring,
-        app_proto: bstring,
-        alert: {
-          severity: uint16,
-          signature: bstring,
-          category: bstring,
-          action: bstring,
-          signature_id: uint64,
-          gid: uint64,
-          rev: uint64,
-          metadata: {
-            signature_severity: [bstring],
-            former_category: [bstring],
-            attack_target: [bstring],
-            deployment: [bstring],
-            affected_product: [bstring],
-            created_at: [bstring],
-            performance_impact: [bstring],
-            updated_at: [bstring],
-            malware_family: [bstring],
-            tag: [bstring]
-          }
-        },
-        flow_id: uint64,
-        pcap_cnt: uint64,
-        tx_id: uint64,
-        icmp_code: uint64,
-        icmp_type: uint64,
-        tunnel: {
-          src_ip: ip,
-          src_port: port,
-          dest_ip: ip,
-          dest_port: port,
-          proto: bstring,
-          depth: uint64
-        },
-        community_id: bstring
-      }
-      filter event_type=="alert" | put this := shape(alert) | rename ts := timestamp
-```
-
-### The Zed Lake
-
-(TODO figure of Brim with local lake and then shared server or cloud)
+So what can you do with the lake?
+> zapi -h
 
 ## Programmable Analytics
 
@@ -755,9 +748,11 @@ zapi query -use demo.pcap@main -I graph.zed | zapi load -use NetGraph@main -
 > (illustrate data in app)
 > TODO: script a workflow... cut and paste an IP with
 
-## Threat Intel Decorations with Join
+## Data Decoration via Join
 
-Say you had a list of badguys...
+There's analytics and there's joins...
+
+Say you had a list of badguys.
 ```
 zq badguys.zng
 ```
@@ -769,7 +764,8 @@ zapi create BadGuys
 zapi use BagGuys@main
 zapi load badguys.zson
 ```
-> see BadGuys pool in app
+> The use command is like git checkout.
+> (see BadGuys pool in app)
 
 Now we can do a join with the logs, but let's test it first on a branch.
 ```
@@ -800,71 +796,27 @@ zapi merge main
 > New check app and see the records...
 
 
-Open area of work:
-* How to leverage the Zed data model in the UI?
-* Elegant UX for data instrospection and shaping
-
-Vision: clients will someday somehow express their data in
-a format like Zed (like Zeek does!)
-
 But we need to deal with messy data today...
 * Zed types tame the problem
 * Zed types make shaping easier
 * Show how we shape suricata...
 
-## The Zed Lake
+## Live Ingest
 
-put it all together in a lake
+A main/live branching model for streaming pipelines... work in progress.
 
-composable tools and search indexes... just a zng file.
+(TODO figure of main/live branching)
 
-xxx
-
-built on a cloud storage model...
-- everything is write-once immutable (no appends)
-- everything is named with a globally unique ID
-- transaction log has logical appends (as a new cloud object)
-- garbage collect unreachable objects
-
-Easy caching.  Can cache *everything* since everything is immutable and has a globally unique name.
-
-no leader election because of cloud storage semantics.
-state is detemined by XXX.
-
-all lake state is stored in the cloud
-  (user model still under dev)
-
-now show some lake use cases that leverage Zed...
-
-## threat intel join example / workflow
-
-## main/live
-
-main/live branching model for streaming pipelines
-(work in progress, but power of approach is illustrated here)
-90% of clean up happens on the live to main branch, then kick off index job
-
-## Derived analytics
-
-edge graph... from beacons work.
-show how this query is not easily done with SQL
-
-relate to an orchestration agent.
-(could be triggered off commits...?)
-
-Introspection using meta-queries... the power of Zed in such an approach.
-Compare to database systems that have to design and implement internal fixed schemas for exporting introspection as relational tables.
-
-## pcap lake example
-
-Use brimcap to generate flow IDs
-
-XXX brimcap join on flow (you can create a community ID but you don't have
-to ... you just use the flow ID)
-Zed can join on record values so you can just form a flow ID record and
-do joins on that...
+* Small, batch updates to tip of `live` branch
+    * Many times per second
+* Orchestration agent sweeps the `live` branch into `main`
+    * Compact little data objects into big objects
+    * Compute search indexes for new data
+    * Merge `live` into `main` and rebase `live` back to tip of merged `main`
 
 ## Mechanism/Policy Revisited
+
+> Skip if short on time.
 
 Now you can see the separation:
 * You don't have to think about types _before you put data in Zed_
@@ -880,18 +832,18 @@ Policy may then dictate:
     * put it in an "error" pool
     * raise an alert
 
-## Zed in the App
+## Wrap Up
 
-## threat intel join example / workflow to illustate lake/app connection
+Vision: clients will someday somehow express their data in
+a format like Zed (like Zeek does!)
 
-## join on "this" example...?
+Take-away: first-class types holds promive to improve the ergonomic means
 
-## .
+Security and packets have been a really important use case and we
+intend to continue to work the community on this front
 
 End with pitch for help... we're focused on data platform and modular tools.
 We'd love for community to get involved.
-
-## Wrap Up
 
 As we worked through all this over the past two years,
 I felt just like [Crockford who famously said](https://www.youtube.com/watch?v=-C-JoyNuQJs)
@@ -933,7 +885,6 @@ When Brim launches, it forks a Zed service in the background...
 
 gentle slope: git-like design pattern
 
-
 Easy to dip your toes in...
 
 ## TODO: integrate these ideas into wrap-up... The "A Ha" Moment
@@ -965,7 +916,6 @@ Along the way,
 I felt just like [Crockford who famously said:](https://www.youtube.com/watch?v=-C-JoyNuQJs)
 
 > "I discovered JSON.  I do not claimed to have invented it."
-
 
 ## Bio
 
