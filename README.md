@@ -150,7 +150,7 @@ Leads to a bifurcation
     * "Cleaned-up data" in relational tables, e.g, ClickHouse, BigQuery, Snowflake
     * "Schema-siloed" Parquet files on S3
 
-(TODO: figure of bifurcated pipeline)
+![Bifurcated Search/Analytics](fig/bifurcated.png)
 
 Each piece is
 * easy enough and sensible by itself,
@@ -571,22 +571,22 @@ ls -lh tables.*
 ls -lh zeek.*
 ```
 
-## The Gentle Slope
+## The Zed Lake
 
-_It's hard to make things easy._
+(RELATIONAL FIRST... THEN JOINS?)
 
-Is all this stuff easy?
+With unbundling, we then expose the power and scale of the Zed Lake.
 
-Well, there is some complexity, but how about we tame it with a _gentle slope_.
-* Easy learning curve
-    * start with JSON
-    * start with simple keyword search
-* Make use of simple stuff without knowing the complex stuff
-* The more you learn, the more power at your fingertips
+When Brim launches, it forks a Zed service in the background...
+* manages a local lake
+* open REST API
+* everything the app does, the `zed api` command can do (`zapi` for short)
 
-Easy to dip your toes in...
+gentle slope: git-like design pattern
 
-(back to app)
+![Git Storage Model](fig/git-model.png)
+
+
 * go back to Zeek/Suricata
 * drag in tables.zng
 * if you know, SQL type SQL
@@ -648,6 +648,90 @@ Enter `brimcap`
       filter event_type=="alert" | put this := shape(alert) | rename ts := timestamp
 ```
 
+### The Zed Lake
+
+(TODO figure of Brim with local lake and then shared server or cloud)
+
+## Programmable Analytics
+
+We got the data in, but supposed you wanted to set up some automatic analysis...
+* Compute an edge graph of all communicating host pairs
+* Add some connection stats
+* Look for bad SSL certs
+```
+cat graph.zed
+
+from demo.pcap
+| filter _path=="conn" OR _path=="ssl"
+| summarize
+    count(_path=="conn"),
+    maxConnTime:=max(duration),
+    maxConnBytes:=max(orig_bytes+resp_bytes),
+    totConnBytes:=sum(orig_bytes+resp_bytes),
+    totConnTime:=sum(duration),
+    badSSL:=or(!(validation_status=="ok" OR validation_status==" " OR
+                validation_status=="" OR validation_status==null))
+   by id.resp_h,id.orig_h
+```
+(note "canonical form" instead of short-hand Zed)
+
+Because everything is driven off the API, it would be easy to run
+this automation at periodic intervals and populated a data pool with
+the analysis.
+
+You could do this on a time window, but I'll do the whole pool by hand:
+```
+zapi create NetGraph
+zapi query -use demo.pcap@main -I graph.zed | zapi load -use NetGraph@main -
+```
+> (illustrate data in app)
+> TODO: script a workflow... cut and paste an IP with
+
+## Threat Intel Decorations with Join
+
+Say you had a list of badguys...
+```
+head -10 badguys.zson
+```
+And you wanted to decorate your logs that had an IP in this list.
+
+First we put the badguys list in it's own pool...
+```
+zapi create BadGuys
+zapi use BagGuys@main
+zapi load badguys.zson
+```
+> see BadGuys pool in app
+
+Now we can do a join with the logs, but let's test it first on a branch.
+```
+cat join-badguys.zed
+
+zapi branch test
+zapi use test
+zapi query -I join-badguys.zed | zapi load -
+```
+Use `log` to see that we added the joined data on the branch,
+and run a test query.
+```
+zapi log
+zapi query "count() by _path"
+```
+and narrow it down to the new records with a simple search...
+```
+zapi query "count() by _path | badguy"
+```
+
+> Check app and see that it's not there because it's not in main.
+
+But okay, it's looks good so merge branch `test` into `main`!
+```
+zapi merge main
+```
+
+> New check app and see the records...
+
+
 Open area of work:
 * How to leverage the Zed data model in the UI?
 * Elegant UX for data instrospection and shaping
@@ -661,15 +745,6 @@ But we need to deal with messy data today...
 * Show how we shape suricata...
 
 ## The Zed Lake
-
-With unbundling, we then expose the power and scale of the Zed Lake.
-
-When Brim launches, it forks a Zed service in the background...
-* manages a local lake
-* open REST API
-* everything the app does, the `zed api` command can do (`zapi` for short)
-
-gentle slope: git-like design pattern
 
 put it all together in a lake
 
@@ -780,6 +855,18 @@ It's hard to make things easy ...
     * [github.com/brimdata/zed](http://github.com/brimdata/zed)
 * Public slack
 * Follow us on Twitter
+
+With unbundling, we then expose the power and scale of the Zed Lake.
+
+When Brim launches, it forks a Zed service in the background...
+* manages a local lake
+* open REST API
+* everything the app does, the `zed api` command can do (`zapi` for short)
+
+gentle slope: git-like design pattern
+
+
+Easy to dip your toes in...
 
 ## TODO: integrate these ideas into wrap-up... The "A Ha" Moment
 
