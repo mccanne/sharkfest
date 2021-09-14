@@ -47,9 +47,9 @@ transactionally consistent views across distributed workers.
 
 * Some ancient history: PCAP, BPF, tcpdump
 * Ten years ago: Stanford Sharkfest '11 and Riverbed
-* Present: Up and at 'em with Brim and Zed!
-    * Your 50s sure are different from your early 40s... :)
-    * But I think I still got something left!
+* Present: Brim and Zed
+    * Stumbling on a new data model through PCAP hacking
+    * Like [Crockford](https://youtu.be/-C-JoyNuQJs?t=20), _discovered_ not _invented_
 
 ## Sharkfest '11
 
