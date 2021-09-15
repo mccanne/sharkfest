@@ -62,7 +62,7 @@ My early feedback from smart people...
 > Steve... the world ESPECIALLY doesn't need another query language
 
 * I couldn't really articulate it, but I felt there was a there there.
-* We're just getting to the point where we can articulate it.
+* We're just getting to the point where we can rationalize it all...
 
 In the meantime, we have good practical validation that this approach is
 _easier_, _better_, _faster_.
@@ -75,7 +75,6 @@ Key technical takeaway:
 
 > The Zed data model provides a powerful way
 > to improve the ergonomics of data engineering.
-
 
 ## Zed & Brim
 
@@ -117,7 +116,7 @@ While the PCAP is loading, here is the wiring behind the scenes...
             * Not your typical query, but shows the power of Zed
         * If you're curious what's the junk that uses id in other ways...
             * Fix: `type port=uint16 ; has(id) !is(id,type({orig_h:ip,orig_p:port,resp_h:ip,resp_p:port})) | count() by _path`
-    * A learning tool (_It's hard to make things easy_)
+    * A learning tool
         * Right-click filter by
         * Right-click count by
         * Right-click on pivot to logs
@@ -203,8 +202,6 @@ But to get this structured data into Elastic...
 
 This all creates complexity.
 
-_It's hard to make things easy_
-
 ## The Bifurcation of Search and Analytics
 
 Moreover, search is often not enough... need historical analytics
@@ -222,8 +219,6 @@ Leads to a bifurcation
 Each piece is
 * easy enough and sensible by itself,
 * but when you assemble the pieces, things get complex fast!
-
-_It's hard to make things easy._
 
 ## Schemas to the Rescue
 
@@ -260,8 +255,6 @@ Said another way...
 ... then you may be doing things the hard way.
 
 Your extra effort comes from having to handle policy and mechanism _at the same time_.
-
-_It's hard to make things easy._
 
 ## Zed: A Better Way
 
@@ -620,8 +613,6 @@ This is not the Zed data model...
 
 ## Is there a better way?
 
-_It's hard to make things easy._
-
 > To make Zed efficient, we need to capture the notion of its self-describing
 > structure in an efficient, compact, binary representation.
 
@@ -708,6 +699,10 @@ Zed is all about creating the in-between:
 * a gentle slope between JSON and relational tables
 * your hands are not tied
 * the cognitive overload of _always requiring_ a schema is gone
+
+Key technical takeaway:
+> The Zed data model provides a powerful way
+> to improve the ergonomics of data engineering.
 
 ## Zed through the Lense of Brim
 
