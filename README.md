@@ -53,22 +53,29 @@ transactionally consistent views across distributed workers.
     * Zed: stumbling on a new data model through PCAP hacking
     * Like [Crockford](https://youtu.be/-C-JoyNuQJs?t=20), Zed was _discovered_ not _invented_
 
-## Sharkfest '11
+## Motivation
 
-![Summary Slide from 2011](fig/summary-2011.png)
+My early feedback from smart people...
 
-## Key Takeaway
+> Steve... the world doesn't need another data model
 
-This won't make sense right now, but the key, new technical idea I want to get across is:
+> Steve... the world ESPECIALLY doesn't need another query language
 
-> A first-class type systems provide a powerful way to improve the ergonomics of data engineering
+* I couldn't really articulate it, but I felt there was a there there.
+* We're just getting to the point where we can articulate it.
 
-To this end, we will introduce:
-* First-class types in the data model, and
-* Type-oriented operators in the query language
-    * `typeof`
-    * `cast`, `crop`, `fill`, `order`
-    * `shape`
+In the meantime, we have good practical validation that this approach is
+_easier_, _better_, _faster_.
+
+> "Once my data is in Zed, everything is easy..." - Community User
+
+Community is still small, but we're just getting the MVP done...
+
+Key technical takeaway:
+
+> The Zed data model provides a powerful way
+> to improve the ergonomics of data engineering.
+
 
 ## Zed & Brim
 
@@ -457,6 +464,7 @@ A sequence of records is valid ZSON
 * no need to put them in an array like JSON
 * ZSON is a _superset of NDJSON
 
+
 ## Zed is a Superset of Relational Tables
 
 Armed with this data model, we can tackle relational tables.
@@ -681,6 +689,25 @@ ZNG typically 5-10X smaller than ZSON/JSON (for large files)...
 ls -lh tables.*
 ls -lh zeek.*
 ```
+## Overcoming the Schema Bias Revisited
+
+Now we can revisit the key takeaway...
+
+The schema bias:
+* Either data has a schema OR it doesn't
+    * _schema-less_ or _schema-ful_
+* _Schema-on-read_ vs _schema-on-write_: one or the other
+* You have a list of JSON objects or you have table.
+
+There is no in between.
+
+This ties your hands because you have to define the schema of a thing before
+you can put the schema-less JSON data into the schema-ful thing.
+
+Zed is all about creating the in-between:
+* a gentle slope between JSON and relational tables
+* your hands are not tied
+* the cognitive overload of _always requiring_ a schema is gone
 
 ## Zed through the Lense of Brim
 
