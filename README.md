@@ -196,7 +196,7 @@ But to get this structured data into Elastic...
 * configure extensive "mapping rules" in ingest pipeline
 * mapping rules recover richness of data that was present but lost
 
-(TODO: figure of this foo/bar process)
+![Zeek talking to Elastic](fig/foo-bar.png)
 
 [Corelight's ECS mapping repo](https://github.com/corelight/ecs-mapping)
 
@@ -628,7 +628,7 @@ Inspired by Zeek TSV: put the schemas in the data!
 
 Like Avro but with embedded, incremental fine-grained type bindings...
 
-(TODO: figure of record stream + type context)
+![Type Context](fig/type-context.png)
 
 ## ZNG: An efficient binary form of ZSON
 
@@ -734,7 +734,7 @@ scale?
 
 Enter the Zed Lake.
 
-(TODO figure of Brim App talking beyond desktop lake)
+![Cloud Zed Lake](fig/brim-cloud.png)
 
 ## Native cloud design
 
@@ -883,7 +883,7 @@ zapi merge main
 
 A main/live branching model for streaming pipelines... work in progress.
 
-(TODO figure of main/live branching)
+![Main/live Branching for Ingest](fig/main-live.png)
 
 * Small, batch updates to tip of `live` branch
     * Many times per second
