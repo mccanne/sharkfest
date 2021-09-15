@@ -53,7 +53,7 @@ transactionally consistent views across distributed workers.
     * Zed: stumbling on a new data model through PCAP hacking
     * Like [Crockford](https://youtu.be/-C-JoyNuQJs?t=20), Zed was _discovered_ not _invented_
 
-## Key Takeaway
+## Some Pushback
 
 About 18 months ago, we got some early feedback from smart people...
 
@@ -67,8 +67,10 @@ About 18 months ago, we got some early feedback from smart people...
 * I couldn't really articulate it yet, but I felt we were onto something.
 * We're just getting to the point where we can rationalize it all...
 
-In the meantime, we built use stuff and have anecdotal validation
-from our user community.
+## Key Takeaway
+
+Along the way, we built useful stuff and have anecdotal validation
+from our user community that we're doing something right...
 
 > "Once my data is in Zed, everything is easy..." - Community User
 
@@ -76,7 +78,7 @@ Another community user tweeted:
 
 ![Brim is Beautiful](fig/brim-beautiful.png)
 
-Underneath is the key takeaway for this talk:
+Underneath all this is the key takeaway for this talk:
 
 > Zed is all about _ergonomics_ for _data engineering_.
 > Zed makes it all easier.
@@ -125,11 +127,11 @@ While the PCAP is loading, here is the wiring behind the scenes...
             * Hey, what's the junk?
             * Why are the column headers gone?
             * Zed is very forgiving: Zeek uses `id` for different things.
-        * Fix: `type port=uint16 ; is(id,type({orig_h:ip,orig_p:port,resp_h:ip,resp_p:port})) | count() by id`
+        * Tease apart with: `type port=uint16 ; is(id,type({orig_h:ip,orig_p:port,resp_h:ip,resp_p:port})) | count() by id`
             * Not your typical query, but shows the power of Zed
         * If you're curious what's the junk that uses id in other ways...
             * Fix: `type port=uint16 ; has(id) !is(id,type({orig_h:ip,orig_p:port,resp_h:ip,resp_p:port})) | count() by _path`
-    * A learning tool
+    * A learning tool - beginner shouldn't have to know this complex queries
         * Right-click filter by
         * Right-click count by
         * Right-click on pivot to logs
@@ -137,7 +139,7 @@ While the PCAP is loading, here is the wiring behind the scenes...
     * A security skin
         * Click on conn to show Zeek details
         * Click on Suricata Alerts query
-    * A wireshark navigator
+    * A wireshark navigator - Zeek provides context for PCAP drill downs
         * Click to packets
 
 ## Our Team
