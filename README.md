@@ -242,7 +242,7 @@ And why do you want to manage two different systems?
 ## Policy & Mechanism
 
 * An old adage says _you should separate policy from mechanism_
-* Yet, Parquet and RDBMS tables combine schema with format
+* Yet, Parquet and relational tables combine schema with format
 * If schemas are your policy for clean data _and_ tables are your mechanism,
 then these approaches might just lead to headaches...
 
@@ -315,9 +315,9 @@ Field quotes needed only when there are special characters:
 ```
 echo '{"funny@name":1}' | zq -Z -
 ```
-Fully compatible with JSON:
+Fully compatible with JSON (and its corner cases):
 ```
-echo '{"":1}' | zq -Z -
+echo '{"":{}}' | zq -Z -
 ```
 
 ## Zed is statically typed
