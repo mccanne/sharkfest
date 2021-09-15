@@ -81,11 +81,11 @@ Key takeaway:
 > Zed is all about _ergonomics_ for _data engineering_.
 > Zed makes it all easier.
 
-Human productivity.  Not speeds and feeds.
+Human productivity.  Not so much speeds and feeds.
 
 ## Zed & Brim
 
-Zed and Brim comprise a data-engineering use case for security...
+Zed and Brim have been the driver for this data-engineering use case...
 
 * Zed & Brim are open source (BSD license)
     * [github.com/brimdata/brim](https://github.com/brimdata/brim)
@@ -101,8 +101,10 @@ Zed and Brim comprise a data-engineering use case for security...
 
 While the PCAP is loading, here is the wiring behind the scenes...
 * Data organized into "pools" like Mongo _collections_
-* PCAP-oriented Incidence Response / Threat Hunting use case
-* Bundled integrations with Zeek and Suricata
+* `brimcap` bundles integrations for Zeek and Suricata
+    * `brimcap` builds a PCAP index
+    * `brimcap` loads processed logs into a Zed pool
+* Brim interacts with `brimcap` for click-to-packets
 
 ![App Architecture](fig/app-arch.png)
 
@@ -140,8 +142,7 @@ While the PCAP is loading, here is the wiring behind the scenes...
 
 ## Our Team
 
-We realized there was an interesting problem to explore here beyond
-Zeek and Suricata
+We realized there was this _ergonomics_ problem to solve for data engineering
 * Not a typical startup
 * A multi-year, research effort
 * _Creation of_ open-source project rather than its _commercialization_
@@ -215,15 +216,15 @@ This all creates complexity.
 
 ## The Bifurcation of Search and Analytics
 
-Moreover, search is often not enough... need historical analytics
-
-Leads to a bifurcation
-
-* *Search*: OpenSearch, Elastic, Splunk
-    * Unstructured logs or semistructured JSON
-* *Analytics*: An Analytics Lake
-    * "Cleaned-up data" in relational tables, e.g, ClickHouse, BigQuery, Snowflake
-    * "Schema-siloed" Parquet files on S3
+Moreover, search is usually not enough...
+* We saw a recurring design pattern among the users we met with
+* Need for _historical analytics_
+* Bifurcated search/analytics model
+    *Search*: OpenSearch, Elastic, Splunk
+        * Unstructured logs or semistructured JSON
+    * *Analytics*: An Analytics Lake
+        * "Cleaned-up data" in relational tables, e.g, ClickHouse, BigQuery, Snowflake
+        * "Schema-siloed" Parquet files on S3
 
 ![Bifurcated Search/Analytics](fig/bifurcated.png)
 
@@ -261,9 +262,9 @@ Said another way...
 * If you are declaring schemas before you can write data...
 * If you are creating relational tables before you can query...
 * If you are writing code to talk to a schema registry...
-* If you are compiling _protos_ before you can talk to a server...
+* If you are compiling _protos_ before you can communicate with a server...
 
-... then you may be doing things the hard way.
+... then you may be _doing things the hard way_.
 
 Your extra effort comes from having to handle policy and mechanism _at the same time_.
 
@@ -309,8 +310,8 @@ echo "..." | zq -Z -
 ```
 Leverage the simplicity of JSON.
 * *Zed is a superset of JSON*
-* The human-readable form of Zed is called ZSON
-* E.g., take Zed as input and pretty-print it:
+* The human-readable form of Zed is called *ZSON*
+* E.g., we'll take JSON/ZSON as input and pretty-print it:
 ```
 echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z -
 ```
@@ -437,6 +438,8 @@ But in Zed, clean data doesn't have to live in a relational table.
 
 Shaping functions take a value and a target type.
 
+> Shaping is a rich problem and an area of active work and will evolve.
+
 * `crop` - drop fields to fit target type
 * `fill` - add fields with nulls to fit target
 * `order` - reorder fields in record to fit target
@@ -470,26 +473,31 @@ A sequence of records is valid ZSON
 * no need to put them in an array like JSON
 * ZSON is a _superset of NDJSON
 
-
 ## Zed is a Superset of Relational Tables
 
-Armed with this data model, we can tackle relational tables.
+Armed with the Zed data model, we can tackle relational tables.
 
 CSV is often used for tables, so here is a simple example:
 ```
 cat employee.csv
 zq -Z -i csv employee.csv
 ```
-Note that `id` and `field` are floating point numbers by default
-(CSV doesn't tell use the types of things).
+
+> The problem with CSV is it carries no explicit type information but so
+> many systems rely upon it.  See Alex's Rasmussen's rant that
+> ["It's Time to Retire the CSV"](https://www.bitsondisk.com/writing/2021/retire-the-csv/).
+
+Zed assumes numbers like the `id` and `field` columns are floating point.
 ```
 zq -Z -i csv "by typeof(this)" employee.csv
 ```
-Let's clean that up... we can shape or just use casts here:
+* But that's not always what you want.
+* Let's clean that up...
+* We can `shape` or just use casts here:
 ```
 zq -Z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv
 ```
-and save cleaned data in a new file...
+and save the clean data in a new file...
 ```
 zq -z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv > employee.zson
 ```
@@ -500,17 +508,23 @@ zq -f table employee.zson
 
 ## Relational Zed
 
-> Note: SQL support is currently experimental and early
+So part of unifying the document and relational models is that
+the _Zed language_ is a superset of SQL...
 
-The Zed language is a superset of SQL...
+> Note: SQL support is currently experimental and early
 
 ```
 zq "SELECT name WHERE salary >= 250000" employee.zson
 ```
 
-Note that a _table_ here is just a Zed type.
+Note that the output _table_ here is just a Zed type.
+```
+zq "SELECT name WHERE salary >= 250000" employee.zson | zq -Z "by typeof(this)" -
+```
+* There's no need for ODBC, JDBC, etc.
+* The output is just a self-describing, Zed stream that _happens to be a table_.
 
-Let's look at another table...
+Let's look at another CSV...
 ```
 zq -Z -i csv deals.csv
 ```
@@ -518,7 +532,8 @@ This time we'll clean it up through _shaping_:
 ```
 zq -Z -i csv "type deal = {id:int64,name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv
 ```
-Note importantly the `(=deal)` type definition.
+* Note importantly the `(=deal)` type definition.
+* This is just like the name of a relational table, right?
 
 Let's shape both of the CSVs into a new file "tables.zson"...
 ```
@@ -527,10 +542,12 @@ zq -z -i csv "type employee = {id:int64,name:string,city:string,phone:int64,sala
 ```
 
 ## SQL Tables as Zed Types
-
+And now we have two relational tables called `deal` and `employee` in one ZSON file:
 ```
 cat tables.zson
+zq -Z "by typeof(this)" tables.zson
 ```
+
 We can simply add a "FROM" clause to refer to a table by its type name:
 ```
 zq -f table "SELECT name FROM employee WHERE salary >= 250000" tables.zson
@@ -540,16 +557,22 @@ Of course, there is an easier way given the mixed nature of the Zed data model..
 ```
 zq -f table "salary >= 250000 or forecast >= 200000" tables.zson
 ```
+SQL doesn't let you mix tables like this so easily... you have to do complicated JOINs.
 
 ## SQL/Zed Joins
 
-Since tables are just types, you can do JOINs too!
+Since tables are just types, you can do JOINs in Zed too!
 
 ```
 zq -f table "SELECT e.name AS NAME, d.forecast AS FORECAST FROM employee e JOIN deal d ON e.name=d.name" tables.zson
 ```
-* You can aggregate too of course.  
+* You can compute aggregations too, of course.
+* Let's sum up the forecast by employee
+```
+zq -f table "SELECT e.name AS NAME, sum(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" tables.zson
+```
 * Unlike SQL, Zed has _sets_ and set operators
+* So you can do a set-union of the forecast instead of sum:
 ```
 zq -f table "SELECT e.name AS NAME, union(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" tables.zson
 ```
@@ -557,7 +580,20 @@ Here it is in ZSON...
 ```
 zq -z "SELECT e.name AS name, union(d.forecast) AS forecast FROM employee e JOIN deal d ON e.name=d.name GROUP BY name" tables.zson
 ```
-The `|[ ... |]` syntax indicates a set.
+The `|[ ... |]` syntax indicates a set as we mentioned earlier.
+
+## Converging the Models
+
+ZSON is perfectly happy to have all this data together as the type
+system let's us manage it all...
+```
+cat tables.zson values.zson > kitchen-sink.zson
+zq -Z "by typeof(this)" asink.zson
+```
+And I can still run my SQL queries on the heterogenous data...
+```
+zq -f table "SELECT e.name AS NAME, sum(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" kitchen-sink.zson
+```
 
 ## ZSON Efficiency
 
@@ -673,6 +709,25 @@ retaining the orginal order of records...
  zq -i zst tables.zst
  ```
 
+#### Relational tables and ZST
+
+Remember `kitchen-sink.zson`?  What if we convert this to ZST?
+```
+zq -f zst kitchen-sink.zson > kitchen-sink.zst
+hexdump -C kitchen-sink.zst
+```
+Some magic happens here...
+* The relational tables self organize into groups of ZST columns
+* They are stored as efficiently as Parquet or any data warehouse columnar store
+* There was no need to define schemas in the storage system to receive the tables
+And a query planner could then optimize and execute a query and read
+just the needed columns just like any modern data warehouse:
+```
+zq -i zst -f table "SELECT e.name AS NAME, sum(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" kitchen-sink.zst
+```
+> Our optimizing query planner for Zed is under development and an
+> active area of work.
+
 ## The Zed Format Family
 
 There you have it... the Zed format family
@@ -693,29 +748,27 @@ ZNG typically 5-10X smaller than ZSON/JSON (for large files)...
 ls -lh tables.*
 ls -lh zeek.*
 ```
-## Overcoming the Schema Bias Revisited
-
-Now we can revisit the key takeaway...
+## The Takeaway Revisited
 
 The schema bias:
 * Either data has a schema OR it doesn't
     * _schema-less_ or _schema-ful_
 * _Schema-on-read_ vs _schema-on-write_: one or the other
-* You have a list of JSON objects or you have table.
+* You have a list of JSON objects (Elastic) or you have tables (warehouse).
 
-There is no in between.
+In the world today, there is no "in between".
 
 This ties your hands because you have to define the schema of a thing before
 you can put the schema-less JSON data into the schema-ful thing.
 
-Zed is all about creating the in-between:
+Zed is all about creating the "in between":"
 * a gentle slope between JSON and relational tables
 * your hands are not tied
 * the cognitive overload of _always requiring_ a schema is gone
 
-Key technical takeaway:
-> The Zed data model provides a powerful way
-> to improve the ergonomics of data engineering.
+The takeaway:
+> Zed is all about _ergonomics_ for _data engineering_.
+> Zed makes it all easier.
 
 ## Zed through the Lense of Brim
 
