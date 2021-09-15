@@ -1,10 +1,10 @@
 # The [Zed Project](https://github.com/brimdata/zed): Stumbling Upon a [New Data Model](https://github.com/brimdata/zed/blob/main/docs/formats/zson.md) while Hacking on Packets
 
-> This README comprises a presentation I gave at Sharkfest '21
-> at 8-9am on September 17, 2021.  You can reproduce all the examples
+> This README comprises a presentation given by Steve McCanne at Sharkfest '21,
+> 8-9am on September 17, 2021.  You can reproduce all the examples
 > herein from the tools referenced and files in this repo.
 > This is Part 2 of
-> [my talk from 10 years ago](https://sharkfestus.wireshark.org/sf11)
+> [Steve's talk from 10 years ago](https://sharkfestus.wireshark.org/sf11)
 > at Sharkfest '11.
 
 ## Abstract
@@ -55,7 +55,7 @@ transactionally consistent views across distributed workers.
 
 ## Key Takeaway
 
-About 18 months ago, some early feedback from smart people...
+About 18 months ago, we got some early feedback from smart people...
 
 > Steve... the world doesn't need another data model.
 
@@ -63,12 +63,12 @@ About 18 months ago, some early feedback from smart people...
 
 > Steve... no one cares about your tech.  What problem are you solving?
 
-* I couldn't really articulate yet, but I felt we were onto something.
 * I was stubborn and persevered.
+* I couldn't really articulate it yet, but I felt we were onto something.
 * We're just getting to the point where we can rationalize it all...
 
-In the meantime, we have anecdotal validation that this approach is
-_easier_, _better_, _faster_.
+In the meantime, we built use stuff and have anecdotal validation
+from our user community.
 
 > "Once my data is in Zed, everything is easy..." - Community User
 
@@ -76,7 +76,7 @@ Another community user tweeted:
 
 ![Brim is Beautiful](fig/brim-beautiful.png)
 
-Key takeaway:
+Underneath is the key takeaway for this talk:
 
 > Zed is all about _ergonomics_ for _data engineering_.
 > Zed makes it all easier.
@@ -85,7 +85,7 @@ Human productivity.  Not so much speeds and feeds.
 
 ## Zed & Brim
 
-Zed and Brim have been the driver for this data-engineering use case...
+Zed and Brim have been the driver for tackling the complexity of data engineering...
 
 * Zed & Brim are open source (BSD license)
     * [github.com/brimdata/brim](https://github.com/brimdata/brim)
