@@ -67,17 +67,21 @@ About 18 months ago, some early feedback from smart people...
 * I was stubborn and persevered.
 * We're just getting to the point where we can rationalize it all...
 
-In the meantime, we have good practical validation that this approach is
+In the meantime, we have anecdotal validation that this approach is
 _easier_, _better_, _faster_.
 
 > "Once my data is in Zed, everything is easy..." - Community User
 
+Another community user tweeted:
+
 ![Brim is Beautiful](fig/brim-beautiful.png)
 
-Key technical takeaway:
+Key takeaway:
 
-> Zed provides a powerful, new data model and query language that
-> substantially improves the _ergonomics_ of data engineering.
+> Zed is all about _ergonomics_ for _data engineering_.
+> Zed makes it all easier.
+
+Human productivity.  Not speeds and feeds.
 
 ## Zed & Brim
 
