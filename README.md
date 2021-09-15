@@ -57,11 +57,14 @@ transactionally consistent views across distributed workers.
 
 My early feedback from smart people...
 
-> Steve... the world doesn't need another data model
+> Steve... the world doesn't need another data model.
 
-> Steve... the world ESPECIALLY doesn't need another query language
+> Steve... the world ESPECIALLY doesn't need another query language.  Use SQL.
 
-* I couldn't really articulate it, but I felt there was a there there.
+> Steve... no one cares about your tech.  What problem are you solving?
+
+* I couldn't really articulate yet, but I felt we were onto something.
+* I was stubborn and persevered.
 * We're just getting to the point where we can rationalize it all...
 
 In the meantime, we have good practical validation that this approach is
@@ -69,12 +72,10 @@ _easier_, _better_, _faster_.
 
 > "Once my data is in Zed, everything is easy..." - Community User
 
-Community is still small, but we're just getting the MVP done...
-
 Key technical takeaway:
 
-> The Zed data model provides a powerful way
-> to improve the ergonomics of data engineering.
+> Zed provides a powerful, new data model and query language that
+> substantially improves the _ergonomics_ of data engineering.
 
 ## Zed & Brim
 
@@ -92,6 +93,8 @@ Key technical takeaway:
 
 While the PCAP is loading, here is the wiring behind the scenes...
 * Data organized into "pools" like Mongo _collections_
+* PCAP-oriented Incidence Response / Threat Hunting use case
+* Bundled integrations with Zeek and Suricata
 
 ![App Architecture](fig/app-arch.png)
 
