@@ -53,7 +53,7 @@ transactionally consistent views across distributed workers.
     * Zed: stumbling on a new data model through PCAP hacking
     * Like [Crockford](https://youtu.be/-C-JoyNuQJs?t=20), Zed was _discovered_ not _invented_
 
-## Motivation
+## Key Takeaway
 
 About 18 months ago, some early feedback from smart people...
 
@@ -71,6 +71,8 @@ In the meantime, we have good practical validation that this approach is
 _easier_, _better_, _faster_.
 
 > "Once my data is in Zed, everything is easy..." - Community User
+
+![Brim is Beautiful](fig/brim-beautiful.png)
 
 Key technical takeaway:
 
@@ -300,7 +302,7 @@ in pretty-printed ZSON.
 echo "..." | zq -Z -
 ```
 Leverage the simplicity of JSON.
-* Zed is a superset of JSON
+* *Zed is a superset of JSON*
 * The human-readable form of Zed is called ZSON
 * E.g., take Zed as input and pretty-print it:
 ```
@@ -314,10 +316,6 @@ Fully compatible with JSON (and its corner cases):
 ```
 echo '{"":{}}' | zq -Z -
 ```
-ZSON...
-* Doesn't require quotes around field names
-* is otherwise, very familiar, just like JSON
-* yet, is much more general...
 
 ## Zed is statically typed
 
@@ -358,7 +356,14 @@ If ZSON is
 * but also statically typed,
 * how do we handle mixed-type arrays?
 
-Let's just have a look:
+```
+[ "hello", 1,  true, null ]
+```
+What is the type of this array value?
+* Array of `any`?
+* Array of ...?
+
+Let's have a look to see what we decided...
 ```
 echo '{ A:["hello",1,"world",true,2,false] }' | zq -Z -
 ```
