@@ -85,6 +85,8 @@ Human productivity.  Not speeds and feeds.
 
 ## Zed & Brim
 
+Zed and Brim comprise a data-engineering use case for security...
+
 * Zed & Brim are open source (BSD license)
     * [github.com/brimdata/brim](https://github.com/brimdata/brim)
     * [github.com/brimdata/zed](https://github.com/brimdata/zed)
