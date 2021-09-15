@@ -45,7 +45,7 @@ transactionally consistent views across distributed workers.
 
 ## Introduction
 
-> Feel free to follow along at [github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest)
+> Feel free to follow along at [github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest) XXX move to brimdata
 
 * Some ancient history: PCAP, BPF, tcpdump
 * Ten years ago: [Stanford Sharkfest '11](https://sharkfestus.wireshark.org/sf11) and Riverbed
@@ -55,7 +55,7 @@ transactionally consistent views across distributed workers.
 
 ## Motivation
 
-My early feedback from smart people...
+About 18 months ago, some early feedback from smart people...
 
 > Steve... the world doesn't need another data model.
 
@@ -79,7 +79,7 @@ Key technical takeaway:
 
 ## Zed & Brim
 
-* We are committed to open source
+* Zed & Brim are open source (BSD license)
     * [github.com/brimdata/brim](https://github.com/brimdata/brim)
     * [github.com/brimdata/zed](https://github.com/brimdata/zed)
 * Search-like experience optimized for Zeek and Suricata
@@ -306,11 +306,6 @@ Leverage the simplicity of JSON.
 ```
 echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z -
 ```
-You will notice:
-* don't need (but can have) quotes around field names
-* otherwise, very familiar
-* at the same time, very different
-
 Field quotes needed only when there are special characters:
 ```
 echo '{"funny@name":1}' | zq -Z -
@@ -319,6 +314,10 @@ Fully compatible with JSON (and its corner cases):
 ```
 echo '{"":{}}' | zq -Z -
 ```
+ZSON...
+* Doesn't require quotes around field names
+* is otherwise, very familiar, just like JSON
+* yet, is much more general...
 
 ## Zed is statically typed
 
