@@ -750,21 +750,22 @@ ls -lh zeek.*
 ```
 ## The Takeaway Revisited
 
-The schema bias:
+The mechanism/policy problem should be clear now:
 * Either data has a schema OR it doesn't
-    * _schema-less_ or _schema-ful_
-* _Schema-on-read_ vs _schema-on-write_: one or the other
-* You have a list of JSON objects (Elastic) or you have tables (warehouse).
+* You have a list of JSON objects (like Elastic) or you have tables (like a warehouse).
+* The underlying formats are intertwined the schema policies.a
 
 In the world today, there is no "in between".
 
 This ties your hands because you have to define the schema of a thing before
 you can put the schema-less JSON data into the schema-ful thing.
 
-Zed is all about creating the "in between":"
+Clearly, Zed is all about creating the "in between":"
 * a gentle slope between JSON and relational tables
 * your hands are not tied
 * the cognitive overload of _always requiring_ a schema is gone
+
+Zed data is both like JSON and like relational tables, and anywhere in between.
 
 The takeaway:
 > Zed is all about _ergonomics_ for _data engineering_.
@@ -772,7 +773,9 @@ The takeaway:
 
 ## Zed through the Lense of Brim
 
-Have another look now...
+Let's go back to the Brim app and have another look at the UX in
+light of the Zed data model...
+
 * drag `tables.zng` into a new data pool
     * Click on relational queries
     * Show Zed versions
@@ -861,9 +864,12 @@ zapi query "from Test@B"
 zapi query "from Test@<id>"
 ```
 
-## Programmable Analytics
+## Automatic Insights through Programmable Analytics
 
-We got the data in, but supposed you wanted to set up some automatic analysis...
+It's one thing to get data into a Zed lake, it's another to derive insights
+and automate that process...
+
+A security example...
 * Compute an edge graph of all communicating host pairs
 * Add some connection stats
 * Look for bad SSL certs
@@ -884,7 +890,7 @@ from demo.pcap
 ```
 (note "canonical form" instead of short-hand Zed)
 
-Because everything is driven off the API, it would be easy to run
+Because everything is driven off the API, it is easy to run
 this automation at periodic intervals and populated a data pool with
 the analysis.
 
@@ -893,16 +899,17 @@ You could do this on a time window, but I'll do the whole pool by hand:
 zapi create NetGraph
 zapi query -use demo.pcap@main -I graph.zed | zapi load -use NetGraph@main -
 ```
-> (illustrate data in app)
-> TODO: script a workflow... cut and paste an IP with
+> (show bad certs in app, click through to logs, then to packets)
 
 ## Data Decoration via Join
 
-There's analytics and there's joins...
+What about augmenting data in addition to deriving insights?
+
+Enter `join`
 
 Say you had a list of badguys.
 ```
-zq badguys.zng
+zq badguys.zson
 ```
 And you wanted to decorate your logs that had an IP in this list.
 
@@ -936,12 +943,11 @@ zapi query "count() by _path | badguy"
 
 > Check app and see that it's not there because it's not in main.
 
-But okay, it's looks good so merge branch `test` into `main`!
+Okay, it's looks good so merge branch `test` into `main`!
 ```
 zapi merge main
 ```
 > New check app and see the records...
-
 
 ## Live Ingest
 
@@ -958,60 +964,27 @@ A main/live branching model for streaming pipelines... work in progress.
     * Compute search indexes for new data
     * Merge `live` into `main` and rebase `live` back to tip of merged `main`
 
-## Mechanism/Policy Revisited
+## Summary
 
-> Skip if short on time.
+* Showed our new app Brim
+* Described the Zed data model we stumbled upon while hacking PCAPs
+* Proposed that Zed unifies the document and relational models
+* Walked through how it all comes together in a Git-like Zed lake
+* Closed with a novel model for live, streaming ingest based on branching
 
-Zed separates _format mechanism_ from _schema policy_:
-* You don't have to think about types _before you put data in Zed_
-* You can query without schemas
-* You can shape the data whenever, however you want
-* You do all this with the same format, in the same place
+So, do you buy our takeaway?
 
-Policy may then dictate:
-* What types you "are allowed to" query
-* What types you allow into the cleaned up data pool
-* What to do with data that has "the wrong shape"
-    * because something upstream changes
-    * let it in?
-    * put it in an "error" pool
-    * raise an alert
+> Zed is all about _ergonomics_ for _data engineering_.
+> Zed makes it all easier.
 
-## Wrap Up
+### Join in the fun!
 
-Vision
-* Clients will someday somehow express their data in a format like Zed (like Zeek does)
-* But we fit into the world as it exists with support for integrations.
+If your interested, please connect with us online
 
-Does our key take-away make sense now?
-
-> A type system is a powerful way to improve the ergnomics of data engineering
-
-Security and packets have been a really important use case and we
-intend to continue to work the community on this front
-
-End with pitch for help... we're focused on data platform and modular tools.
-We'd love for community to get involved.
-
-Easy to dip your toes in...
-
-From one of our community users...
-
-_ Once my data is in ZNG, everything is easy..."
-
-* A _gentle slope_ throughout
-* Lightweight, desktop-scale to large and more complex cloud deployment
-* Things "just work"
-
-We spend a lot of time fussing over the details, so if you find something
-complicated or surprising, let us know and we'll try to fix!
-
-* Hard to explain it all with words and demos...
-* You just have to dip your toes in and try it out...
-
-There were lots of blind alleys and restarts.
-
-> "I did not invent --- but rather discovered --- Zed.
+* [Brim public slack](https://www.brimsecurity.com/join-slack/)
+* [Brim twitter](https://twitter.com/brimsecurity)
+* [github.com/brimdata/brim](https://github.com/brimdata/brim)
+* [github.com/brimdata/zed](https://github.com/brimdata/zed)
 
 ## Bio
 
