@@ -61,11 +61,14 @@ transactionally consistent views across distributed workers.
 
 This won't make sense right now, but the key, new technical idea I want to get across is:
 
-> A type system is a powerful way to improve the erognomics of data engineering
+> A first-class type systems provide a powerful way to improve the ergonomics of data engineering
 
 To this end, we will introduce:
 * First-class types in the data model, and
-* Type-oriented operators in the query language.
+* Type-oriented operators in the query language
+    * `typeof`
+    * `cast`, `crop`, `fill`, `order`
+    * `shape`
 
 ## Zed & Brim
 
@@ -118,15 +121,15 @@ While the PCAP is loading, here is the wiring behind the scenes...
     * A wireshark navigator
         * Click to packets
 
-## Our Research Team
+## Our Team
 
 We realized there was an interesting problem to explore here beyond
 Zeek and Suricata
 * Not a typical startup
 * A multi-year, research effort
-* _Creation of_ open-source project rather than _commercialization_
+* _Creation of_ open-source project rather than its _commercialization_
 
-We are just now transitioning from research to execution...
+We are just now transitioning from research mode to execution...
 
 #### Front end
 * James Kerr
@@ -187,7 +190,7 @@ But to get this structured data into Elastic...
 * configure extensive "mapping rules" in ingest pipeline
 * mapping rules recover richness of data that was present but lost
 
-(TODO: figure of this process)
+(TODO: figure of this foo/bar process)
 
 [Corelight's ECS mapping repo](https://github.com/corelight/ecs-mapping)
 
@@ -245,8 +248,9 @@ Said another way...
 * If you are declaring schemas before you can write data...
 * If you are creating relational tables before you can query...
 * If you are writing code to talk to a schema registry...
+* If you are compiling _protos_ before you can talk to a server...
 
-... then you are probably doing things the hard way.
+... then you may be doing things the hard way.
 
 Your extra effort comes from having to handle policy and mechanism _at the same time_.
 
@@ -256,13 +260,11 @@ _It's hard to make things easy._
 
 What if _the mechanism_ were _self-describing data_:
 
-* A comprehensive type system instead of top-level schemas
+* A comprehensive _type system_ instead of top-level _schemas_
 * First-class types to enable "schemas as values"
 * Type-adaptive entities instead of fixed schemas
 
 And what if _the policy_ were enforced externally by the _type system_?
-
-Here, a schema is simply a special case of a record type...
 
 ## Composable Tools
 
@@ -412,7 +414,41 @@ And you can sample a field too...
 zq -Z "sample id" zeek.zng
 ```
 
+## Types and Data Shaping
+
+First-class types can be used to "shape" messy data into clean data.
+
+But in Zed, clean data doesn't have to live in a relational table.
+
+> Shaping is like the L in ELK, logstash, but we use Zed to do it.
+
+Shaping functions take a value and a target type.
+
+* `crop` - drop fields to fit target type
+* `fill` - add fields with nulls to fit target
+* `order` - reorder fields in record to fit target
+* `cast` - cast each input field to the corresponding target type
+
+And `shape` is a mixture all of the above.
+
+Examples:
+```
+echo '{a:1,b:"foo"}' | zq -Z "this:=crop(this,type({a:int64}))" -
+echo '{a:1}' | zq -Z "this:=fill(this,type({a:int64,b:string}))" -
+echo '{b:"foo",a:1}' | zq -Z "this:=order(this,type({a:int64,b:string}))" -
+echo '{a:"128.32.1.1",b:1}' | zq -Z "this:=cast(this,type({a:ip,b:string}))" -
+```
+Example of shaping:
+```
+zq -Z messy.zson
+cat shape.zed
+zq -Z -I shape.zed messy.zson
+```
+
 ## The Zed Data Model
+
+The Zed data model is simply:
+> a sequence of statically typed, heterogeneous values
 
 A sequence of records is valid ZSON
 ```
@@ -420,9 +456,6 @@ A sequence of records is valid ZSON
 ```
 * no need to put them in an array like JSON
 * ZSON is a _superset of NDJSON
-
-The Zed data model is simply:
-> a sequence of statically typed, heterogeneous values
 
 ## Zed is a Superset of Relational Tables
 
@@ -438,7 +471,7 @@ Note that `id` and `field` are floating point numbers by default
 ```
 zq -Z -i csv "by typeof(this)" employee.csv
 ```
-Let's clean that up...
+Let's clean that up... we can shape or just use casts here:
 ```
 zq -Z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv
 ```
@@ -446,9 +479,9 @@ and save cleaned data in a new file...
 ```
 zq -z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv > employee.zson
 ```
-Now we have our relational table:
+Now we have our clean, relational table:
 ```
-zq -f table  employee.zson
+zq -f table employee.zson
 ```
 
 ## Relational Zed
@@ -521,7 +554,7 @@ relational tables, Parquet, Avro, etc?
 
 Like JSON, ZSON is horribly inefficient.
 
-Surely this must be a solved problem?!
+How is this not a solved problem?!
 
 * [Avro](https://avro.apache.org/) came out of the Hadoop ecosystem
 as an efficient representation of semi-structured, binary data compared
@@ -562,7 +595,7 @@ The fundamental disconnect:
 
 ## What about Avro?
 
-Avro has the same problem: a single schema defines the homoegenous sequence
+Avro has the same problem: a single schema defines the homogeneous sequence
 of records.
 
 Confluent solves this for Kafka with its _schema registry_.
@@ -713,6 +746,33 @@ model for the Zed lake.
 So what can you do with the lake?
 > zapi -h
 
+## Branching Basics
+
+```
+zapi create Test
+zapi use Test@main
+echo '{a:1}' | zapi load -
+zapi branch B
+echo '{b:2}' | zapi load -use Test@B -
+zapi query "*"
+zapi use B
+zapi merge main
+zapi query "from Test@main"
+zapi use main
+echo '{c:3}' | zapi load -
+zapi query "*"
+# find merge and undo it
+zapi log
+zapi revert  <id>
+# b record now gone on main
+zapi query "*"
+zapi log
+# b record still on branch B
+zapi query "from Test@B"
+# finally, reach back to before revert commit and B record comes back on main
+zapi query "from Test@<id>"
+```
+
 ## Programmable Analytics
 
 We got the data in, but supposed you wanted to set up some automatic analysis...
@@ -816,8 +876,9 @@ A main/live branching model for streaming pipelines... work in progress.
 
 Zed separates _format mechanism_ from _schema policy_:
 * You don't have to think about types _before you put data in Zed_
-* You can shape the data whenever however you want
-* You can this with the same format, in the same place
+* You can query without schemas
+* You can shape the data whenever, however you want
+* You do all this with the same format, in the same place
 
 Policy may then dictate:
 * What types you "are allowed to" query
