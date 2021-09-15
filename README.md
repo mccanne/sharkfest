@@ -3,7 +3,7 @@
 > This README comprises a presentation I gave at Sharkfest '21
 > at 8-9am on September 17, 2021.  You can reproduce all the examples
 > herein from the tools referenced and files in this repo.
-> In a sense, this is Part 2 of
+> This is Part 2 of
 > [my talk from 10 years ago](https://sharkfestus.wireshark.org/sf11)
 > at Sharkfest '11.
 
