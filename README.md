@@ -85,7 +85,7 @@ Another community user tweeted:
 Underneath all this lies the key takeaway for this talk:
 
 > Brim+Zed is bigger than just an app and search experience.
-> There's something up the data model we found underneath it all.
+> There's something up with the data model we found underneath it all.
 > We think Zed is all about _ergonomics_ for easier _data engineering_.
 
 Zed is to data lakes as JSON was to APIs.
@@ -210,10 +210,14 @@ Make sure all data conforms to pre-design set of schemas (show schemas on figuer
 * Analytics organized around relational table with schemas
 * Parquet files with schemas for efficient columnar analytics
 
-## Schemas Complicate Things
+## Schemas: A Double-edged Sword
 
-We have thought a lot about what makes these systems brittle and difficult
-and have concluded that the schemas over-constrain the interfaces between components:
+Schemas are really quite useful
+* ETL uses them to clean up data
+* Warehouses uses relational schemas to organize data across tables
+* Elastic uses them to normalize data and recover type richness
+
+But they a double-edge sword:
 
 > Schemas are fantastic as an organizing _policy_ for your data,
 > but they get in the way as a _mechanism_ for data storage and transport.
