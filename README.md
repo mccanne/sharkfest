@@ -307,6 +307,9 @@ In all of the above examples:
 
 An old design principle says you should separate _policy_ from _mechanism_ ...
 
+James, from our team, summarized it nicely:
+> So to summarize my understanding, a database has a mechanism to write data to disk. It also has a policy that data in a table must conform to a schema. Therefore to use the “write data to disk” mechanism, that data must conform to the policy of the table’s schema.
+
 Could this be good advice here?  The examples above are all pretty gunky.
 
 ## Zed: A Better Way
@@ -319,6 +322,9 @@ What if _the mechanism_ were _self-describing data_:
     * instead of being constrained by fixed set of schemas
 
 And what if _the policy_ were enforced externally by the _type system_?
+
+From James:
+> With Zed, data need not conform to any policy before it gets saved to disk. Then later a policy can deem certain types of data valid based on its shape.
 
 Before we can explain how this will work, let's give a quick tour
 of the Zed data model.
@@ -356,22 +362,22 @@ echo "..." | zq -Z -
 We leveraged the simplicity of JSON:
 * *Zed is a superset of JSON*
 * The human-readable form of Zed is called *ZSON*
-* We'll take JSON/ZSON as input and pretty-print it:
+* We can take JSON/ZSON as input and pretty-print it:
 ```
 echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z -
 ```
-Field quotes needed only when there are special characters:
+Note the we drop the quotes from field names and use them only when necessary:
 ```
 echo '{"funny@name":1}' | zq -Z -
 ```
-Fully compatible with JSON (and its corner cases):
+And're fully compatible with all of JSON's corner cases:
 ```
 echo '{"":{}}' | zq -Z -
 ```
 
 ## Zed is statically typed
 
-Unlike JSON, Zed is statically type and _comprehensive_
+Unlike JSON, Zed has a _comprehensive_ type system.
 
 Here is a ZSON record with a bunch of different types of values:
 ```
@@ -394,13 +400,15 @@ zq -Z values.zson
 ```
 What we _don't do here_ is define a schema then fit the values into
 the schema.
-
-Data is self describing.
-
-The Zed query language lets you operate over Zed:
+* Data is always self describing.
+* No need to declare types explicitl.
+* The Zed query language lets you operate on Zed data:
 ```
 zq -Z "cut v1,v2,v0:=v1+v2,v7,net:=network_of(v7)" values.zson
 ```
+
+> Zed has more types and "type unions", but I'll leave these details out of
+> this talk.  This is all documented in the [ZSON spec](https://github.com/brimdata/zed).
 
 ## First-class Types
 
@@ -427,14 +435,40 @@ And now, let's name the schema with a Zed typedef:
 ```
 echo '{name:"Sally",city:"Berkeley",salary:350000.}(=employee)' | zq -Z "cut typeof_this:=typeof(this)" -
 ```
-Isn't this exactly a schema?
+Isn't this exactly a relational schema?
 
-## Converging the Zed Model
+## Converging the Document and Relations Models
+
+Many relational tables start out as CSV.
 
 Let's make some sample data:
-* Take CSV, clean it, and form ZSON
-* Throw in the values.json
+* Take some CSVs, clean them, and form ZSON
+* Tack on the values.json
+* Drag "pile of stuff" into a Brim data pool and play around with it
 
+```
+cat employees.csv
+cat deals.csv
+cat values.zson
+
+zq -z -i csv "type deal = {name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv > pile.zson
+zq -z -i csv "type employee = {name:string,city:string,phone:uint32,salary:float64}; this:=cast(this,employee)" employees.csv >> pile.zson
+zq -z junk.zson >> pile.zson
+```
+
+Ok, let's get this file into Brim.
+
+Instead of dragging it in, we'll go though the API with `zapi`.
+> Remember there is `zed lake serve` process running to support Brim.
+
+```
+zapi create PileOfStuff
+zapi use PileOfStuff@main
+zapi load pile.zson
+```
+
+Now we can query it in Brim
+* 'SELECT name FROM employee WHERE salary >= 250000'
 
 ## Data Intropection, Discovery, and Shaping
 
@@ -498,45 +532,6 @@ zq -Z -I shape.zed messy.zson
 ```
 ## Zed is a Superset of Relational Tables
 
-Armed with the Zed data model, we can tackle relational tables.
-
-CSV is often used for tables, so here is a simple example:
-```
-cat employee.csv
-zq -Z -i csv employee.csv
-```
-
-> The problem with CSV is it carries no explicit type information but so
-> many systems rely upon it.  See Alex's Rasmussen's rant that
-> ["It's Time to Retire the CSV"](https://www.bitsondisk.com/writing/2021/retire-the-csv/).
-
-Zed assumes numbers like the `id` and `field` columns are floating point.
-```
-zq -Z -i csv "by typeof(this)" employee.csv
-```
-* But that's not always what you want.
-* Let's clean that up...
-* We can `shape` or just use casts here:
-```
-zq -Z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv
-```
-and save the clean data in a new file...
-```
-zq -z -i csv "id:=int64(id),phone:=int64(phone)" employee.csv > employee.zson
-```
-Now we have our clean, relational table:
-```
-zq -f table employee.zson
-```
-
-## Relational Zed
-
-So part of unifying the document and relational models is that
-the _Zed language_ is a superset of SQL...
-
-> Note: SQL support is currently experimental and early
-
-```
 zq "SELECT name WHERE salary >= 250000" employee.zson
 ```
 
