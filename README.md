@@ -146,13 +146,13 @@ While the PCAP is loading, here is the wiring behind the scenes...
 
 ## Our Team
 
-We realized there was there was a big _ergonomics_ problem to solve for
-data engineering
+We realized there was a bigger problem to solve and went into research mode...
+
 * Not a typical startup
 * A multi-year, research effort
 * _Creation of_ open-source project rather than its _commercialization_
 
-We are just now transitioning from research mode to execution...
+We are now transitioning from research mode to execution...
 
 #### Front end
 * James Kerr
