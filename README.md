@@ -130,7 +130,7 @@ While the PCAP is loading, here is the wiring behind the scenes...
         * `every 10s count() by _path`
             * (try different intervals, 24h, 1w)
             * This is the query the app uses to create the bar chart.
-    * A learning tool - beginner shouldn't have to know this complex queries
+    * A learning tool - beginner doesn't have to know complex queries
         * Right-click filter by
         * Right-click count by
         * Right-click on pivot to logs
@@ -822,6 +822,8 @@ We have a ways to go, but we hope...
 ---
 
 Do you buy it?
+
+[Dimitri Does!](https://www.youtube.com/watch?v=hOQfp41nqp8)
 
 ### Join in the fun!
 
