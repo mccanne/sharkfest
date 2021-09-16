@@ -821,9 +821,7 @@ We have a ways to go, but we hope...
 
 ---
 
-Do you buy it?
-
-[Dimitri Does!](https://www.youtube.com/watch?v=hOQfp41nqp8)
+Do you buy it?  [Dimitri Does!](https://www.youtube.com/watch?v=hOQfp41nqp8)
 
 ### Join in the fun!
 
