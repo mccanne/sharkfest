@@ -88,7 +88,7 @@ Underneath all this lies the key takeaway for this talk:
 > There's something up with the data model we found underneath it all.
 > We think Zed is all about _ergonomics_ for easier _data engineering_.
 
-Our audacious goal: _Zed will be to data lakes what JSON was to APIs._
+Our audacious goal: _Zed will do for data lakes what JSON did for APIs._
 
 ## Zed & Brim
 
@@ -817,7 +817,7 @@ We have a ways to go, but we hope...
 
 ---
 
-**_Zed will be to data lakes what JSON was to APIs._**
+**_Zed will do for data lakes what JSON did for to APIs._**
 
 ---
 
