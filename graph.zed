@@ -1,5 +1,4 @@
-from demo.pcap
-| filter _path=="conn" OR _path=="ssl"
+filter _path=="conn" OR _path=="ssl"
 | summarize
     count(_path=="conn"),
     maxConnTime:=max(duration),

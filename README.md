@@ -440,7 +440,7 @@ Many relational tables start out as CSV.
 Let's make some sample data:
 * Take some CSVs, clean them, and form ZSON
 * Tack on some junk that doesn't fit in `junk.json`
-* Drag "pile of stuff" into a Brim data pool and play around with it
+* Import the "pile of stuff" into Brim and play around with it
 
 ```
 cat employees.csv
@@ -470,7 +470,7 @@ Brim doesn't really know what to make of it.
 
 But we can query it in Brim...
 
->Since I was told no one wants and new query language and I had to use SQL,
+> Since I was told no one wants and new query language and I should use SQL,
 > we made Zed a superset of SQL...
 
 ```
@@ -568,7 +568,7 @@ And here is an important insight:
 > can find a slot in this _single_ schema for all the fields of an incoming record,
 > everything is fine.  But when a field shows up that doesn't fit, you have
 > problems.  Data warehouse can compress all the null columns efficiently,
-> and perform really well for column-oriented analytics.
+> and perform column-oriented analytics really well.
 
 * No wonder there is such a big gap between the relational model and the
 document model.
@@ -593,7 +593,7 @@ We simply need to steal the good ideas from Avro and Parquet...
 * [Avro](https://avro.apache.org/) from the Hadoop ecosystem
 * [Parquet](https://parquet.apache.org/) from Google's [Dremel paper](https://research.google/pubs/pub36632/)
 
-And leave out the schema-rigid bits...
+But leave out the schema-rigid bits...
 * Avro requires a schema for every record or completely uniform records
     * or a schema registry as mentioned earlier
 * Parquet requires a schema for each file where all records conform to the schema
@@ -616,7 +616,7 @@ These mappings are stored in a table called the "type context".
 
 The type context is
 * locally scoped so no need for a schema registry
-* mergeable so different streams with different type contexts can merge, and
+* mergeable so different streams with different type contexts can be interleaved, and
 * concatenatable so streams can easily be processed.
 
 For example,
@@ -624,7 +624,7 @@ For example,
 echo '{a:1}' | zq -f zng - > example1.zng
 echo '{s:"hello"}' | zq -f zng - > example2.zng
 hexdump -C example1.zng example2.zng
-cat example1.zng example2.zng example2.zng example1.zng | zq -
+cat example1.zng example2.zng example2.zng example1.zng example2.zng | zq -
 ```
 > Note `ff` end-of-stream marker.
 
@@ -704,16 +704,9 @@ model for the Zed lake.
 * Work on a branch, test, debug
 * Merge branch to main or drop
 
-In particular, _automation_ and _orchestration_ can use branches for
-flexible configurations of live ingest.
-
-XXX drop this figure
-
-![Git Storage Model](fig/git-model.png)
-
 The Zed Lake's use cases are malleable through its API
 * the Zed service is not a monolithic black box
-* rich API for automation and tooling
+* rich API with many verbs for automation and tooling
 * let's look at a few use cases
 
 ## Automatic Insights through Programmable Analytics
@@ -728,8 +721,7 @@ A security example...
 ```
 cat graph.zed
 
-from demo.pcap
-| filter _path=="conn" OR _path=="ssl"
+filter _path=="conn" OR _path=="ssl"
 | summarize
     count(_path=="conn"),
     maxConnTime:=max(duration),
@@ -752,7 +744,7 @@ zapi query -use demo.pcap@main -I graph.zed | zapi load -use NetGraph@main -
 ```
 > (show bad certs in app, click through to logs, then to packets)
 
-## Data Decoration via Join
+## Automatic Data Decoration via Join
 
 What about augmenting data in addition to deriving insights?
 
