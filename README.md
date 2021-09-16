@@ -88,7 +88,7 @@ Underneath all this lies the key takeaway for this talk:
 > There's something up with the data model we found underneath it all.
 > We think Zed is all about _ergonomics_ for easier _data engineering_.
 
-Our audacious goal: Zed is to data lakes as JSON was to APIs.
+Our audacious goal: _Zed will be to data lakes what JSON was to APIs._
 
 ## Zed & Brim
 
@@ -320,7 +320,7 @@ Here are a just few:
 ## A Zed Tour
 
 We'll use `zq` to take an input, do no processing, and display it
-in pretty-printed ZSON.
+in pretty-printed Zed.
 
 ```
 echo "..." | zq -Z -
@@ -488,9 +488,8 @@ This is because the _Zed type_ defines the table at query time (_policy_),
 and the data is not stored in a fixed-schema relational table (_mechanism_).
 
 The schema
-* is _neither required_,
-* nor _does it stop you_
-from putting data into a Zed data pool.
+* is _neither required_ to define the data,
+* nor _does it stop you_ from putting the data into the system.
 
 James, from our team, summarized it nicely:
 > So to summarize my understanding, a database has a mechanism to write data to disk. It also has a policy that data in a table must conform to a schema. Therefore to use the “write data to disk” mechanism, that data must conform to the policy of the table’s schema.
@@ -500,10 +499,9 @@ James, from our team, summarized it nicely:
 
 This separation principle is very powerful:
 
-> Because data is allowed in without knowing its schema ahead of time,
-> you can use the same system to explore and discover the "shapes" of
-> data (i.e., their schemas) as well as run queries on cleaned up or
-> "shaped" data.
+> Because data is "allowed in" without knowing its schema ahead of time,
+> you can use the very same system to explore and discover the "shapes" of
+> data (i.e., their schemas) before you've figured out how to clean it up.
 
 Zed's type system is a powerful mechanism here.
 
@@ -522,7 +520,7 @@ And we can filter the junky values with this:
 ```
 is(type({a:string,b:string,c:string})) or is(type({message:string}))
 ```
-And the clean data is
+So the clean data is
 ```
 is(type(deal)) or is(type(employee))
 ```
@@ -536,14 +534,14 @@ Now if I look at the shapes in the clean table, I can confirm it worked:
 count() by typeof(this)
 ```
 
-## Instrospection in the PCAP data
+## Introspection of the PCAP Data
 
-So let's go back to the pcap data in the app and run Henri's query:
+So let's go back to the PCAP example in the app and run Henri's query:
 ```
 count() by typeof(this)
 ```
 
-Ok, that's really powerful but it would be more intuitive to see a sample
+Ok, that's really powerful, but it would be more intuitive to see a sample
 value of each type...  you can use the _any_ aggregator!
 ```
 any(this) by typeof(this) | cut any
@@ -825,9 +823,11 @@ A main/live branching model for streaming pipelines... work in progress.
     * be performant with its record- and columnar-based formats
 * Walked through how it all comes together in a Git-like Zed lake
 
-> Brim+Zed is bigger than just an app and search experience.
-> There's something up the data model we found underneath it all.
-> We think Zed is all about _ergonomics_ for easier _data engineering_.
+We have a ways to go, but we hope...
+
+> Zed will be to data lakes what JSON was to APIs.
+
+Do you buy it?
 
 ### Join in the fun!
 
