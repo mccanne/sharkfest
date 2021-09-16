@@ -462,6 +462,7 @@ zapi create PileOfStuff
 zapi use PileOfStuff@main
 zapi load pile.zson
 ```
+> The "zapi use" command is like "git checkout".
 
 Brim doesn't really know what to make of it.
 * It doesn't look like Zeek or Suricata
@@ -709,7 +710,7 @@ The Zed Lake's use cases are malleable through its API
 * rich API with many verbs for automation and tooling
 * let's look at a few use cases
 
-## Automatic Insights through Programmable Analytics
+## Automatic Insights with Programmable Analytics
 
 It's one thing to get data into a Zed lake, it's another to derive insights
 and automate that process...
@@ -744,7 +745,7 @@ zapi query -use demo.pcap@main -I graph.zed | zapi load -use NetGraph@main -
 ```
 > (show bad certs in app, click through to logs, then to packets)
 
-## Automatic Data Decoration via Join
+## Automatic Data Decoration with Join
 
 What about augmenting data in addition to deriving insights?
 
@@ -762,8 +763,7 @@ zapi create BadGuys
 zapi use BagGuys@main
 zapi load badguys.zson
 ```
-> The use command is like git checkout.
-> (see BadGuys pool in app)
+> (see BadGuys pool in app... it's like a toy threat intel feed.)
 
 Now we can do a join with the logs, but let's test it first on a branch.
 ```
