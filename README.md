@@ -193,9 +193,9 @@ Yet, search alone is usually not enough...
 * We saw a recurring design pattern in large-scale deployments
 * Need for _historical analytics_
 * Bifurcated search/analytics model
-    * *Search*: OpenSearch, Elastic, Splunk
+    * **Search**: OpenSearch, Elastic, Splunk
         * Unstructured logs or semistructured JSON
-    * *Analytics*: in a lake or warehouse
+    * **Analytics**: in a lake or warehouse
         *  Relational tables, e.g, ClickHouse, BigQuery, Snowflake
         *  Parquet files on S3
 
@@ -823,7 +823,7 @@ Do you buy it?
 
 ### Join in the fun!
 
-If your interested, please connect with us online
+If you're interested, please connect with us online
 
 * [Brim public slack](https://www.brimsecurity.com/join-slack/)
 * [Brim twitter](https://twitter.com/brimsecurity)
@@ -847,6 +847,3 @@ took his '02 company and Sharkfest's sponsor, Riverbed, public in '06.
 After many years working in other areas of tech, Steve has
 returned to his roots, dabbling again with PCAPs, leading him to Zed
 and a whole new way to approach network and IT observability data.
-
-Zed is comprised of a human-readable form called ZSON and two binary, performant
-formats for row and columnar layouts (called ZNG and ZST respectively).
