@@ -813,7 +813,7 @@ A main/live branching model for streaming pipelines... work in progress.
     * be performant with its record- and columnar-based formats
 * Walked through how it all comes together in a Git-like Zed lake
 
-We have a ways to go, but we hope...
+We have a ways to go, but we hope someday that...
 
 ---
 
