@@ -690,14 +690,14 @@ Enter the Zed Lake.
 
 ![Cloud Zed Lake](fig/brim-cloud.png)
 
-## Native cloud design
+### Native cloud design
 
 Built on a cloud storage model...
 * Objects are stored as ZNG/ZST, immutable, and have globally unique name
 * Search indexes are just ZNG objects (with simple b-tree indexing)
 * All state changes to the lake view stored in a cloud-based transaction journal
 
-## The Git Design Pattern
+### The Git Design Pattern
 
 We realized many compelling use cases could be supported by a Git-like
 model for the Zed lake.
@@ -710,7 +710,7 @@ The Zed Lake's use cases are malleable through its API
 * rich API with many verbs for automation and tooling
 * let's look at a few use cases
 
-## Automatic Insights with Programmable Analytics
+### Automatic Insights with Programmable Analytics
 
 It's one thing to get data into a Zed lake, it's another to derive insights
 and automate that process...
@@ -745,7 +745,7 @@ zapi query -use demo.pcap@main -I graph.zed | zapi load -use NetGraph@main -
 ```
 > (show bad certs in app, click through to logs, then to packets)
 
-## Automatic Data Decoration with Join
+### Automatic Data Decoration with Join
 
 What about augmenting data in addition to deriving insights?
 
@@ -792,7 +792,7 @@ zapi merge main
 ```
 > New check app and see the records...
 
-## Live Ingest
+### Live Ingest
 
 A main/live branching model for streaming pipelines... work in progress.
 
