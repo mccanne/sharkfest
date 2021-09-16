@@ -47,7 +47,7 @@ transactionally consistent views across distributed workers.
 
 ## Introduction
 
-> Feel free to follow along at [github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest) XXX move to brimdata
+> Feel free to follow along at [github.com/brimdata/sharkfest-21](https://github.com/brimdata/sharkfest-21)
 
 > Drag pcap to start the import...
 
@@ -395,7 +395,7 @@ without loss of information.
 
 * A Zed value always has a type
 * Zed _types_ are Zed _values_
-* The `typeof` operator can be applied to any field, e.g.,
+* The `typeof` operator creates a _type value_ from a value
 ```
 echo '{s:"hello"}' | zq -Z "typeof_s:=typeof(s)" -
 ```
@@ -408,7 +408,7 @@ The special value "this" refers to the current record in a declarative style:
 ```
 echo '{s:"hello"}' | zq -Z "put copy:=this" -
 ```
-Zed is strongly typed and `this` always implies its type:
+`this` is a value, so it always has type:
 ```
 echo '{s:"hello"}' | zq -Z "put typeof_this:=typeof(this)" -
 ```
@@ -419,7 +419,7 @@ Compare with JSON/Javascript:
 node
 typeof({s:"hello"})
 ```
-Hmm, that's not helpful here.
+Hmm, another limitation of Javascript.  This is not helpful here.
 
 Let's try something a little more complex:
 ```
@@ -431,7 +431,7 @@ echo '{name:"Sally",city:"Berkeley",salary:350000.}(=employee)' | zq -Z "cut typ
 ```
 Isn't this exactly a relational schema?
 
-> This is really powerful because we can now get the schema from the data
+> This is powerful: we can now get the schema from the data itself
 > and do not have to synchronize data values with some external schema definition.
 
 ## Converging the Document and Relational Models
@@ -473,8 +473,8 @@ Brim doesn't really know what to make of it.
 
 But we can query it in Brim...
 
->Since I was told no wants and new query language and to use SQL, we made Zed
->a superset of SQL...
+>Since I was told no one wants and new query language and I had to use SQL,
+> we made Zed a superset of SQL...
 
 ```
 SELECT * FROM employee
@@ -491,8 +491,8 @@ This is because the _Zed type_ defines the table at query time (_policy_),
 and the data is not stored in a fixed-schema relational table (_mechanism_).
 
 The schema
-* is neither required,
-* nor does it stop you
+* is _neither required_,
+* nor _does it stop you_
 from putting data into a Zed data pool.
 
 James, from our team, summarized it nicely:
@@ -571,9 +571,9 @@ And here is an important insight:
 > (or Parquet files that hold lots of columns).  You define a single, very-wide schema
 > to hold any possible field that might show up, and as long as your ETL logic
 > can find a slot in this _single_ schema for all the fields of an incoming record,
-> everything is fine.  But when a field shows up that doesn't fit, you get
-> problems.  Data warehouse compress all the null columns really well, and
-> and perform really well for column-oriented analytics queries.
+> everything is fine.  But when a field shows up that doesn't fit, you have
+> problems.  Data warehouse can compress all the null columns efficiently,
+> and perform really well for column-oriented analytics.
 
 * No wonder there is such a big gap between the relational model and the
 document model.
@@ -582,9 +582,9 @@ document model.
 ## ZSON Efficiency
 
 Ok, this separate of policy and mechanism argument sounds great, but how can
-you make this ZSON text format efficinet?
+you make this ZSON text format efficient?
 
-Like JSON, ZSON must be horribly inefficient.
+Like JSON, text-based ZSON is horribly inefficient.
 
 And columnar data warehouses are really fast!
 * the wide-schema model has evolved over decades
@@ -598,9 +598,9 @@ We simply need to steal the good ideas from Avro and Parquet...
 * [Avro](https://avro.apache.org/) from the Hadoop ecosystem
 * [Parquet](https://parquet.apache.org/) from Google's [Dremel paper](https://research.google/pubs/pub36632/)
 
-And leave out the rigid-schema bits...
+And leave out the schema-rigid bits...
 * Avro requires a schema for every record or completely uniform records
-    * or a schema registery as mentioned earlier
+    * or a schema registry as mentioned earlier
 * Parquet requires a schema for each file where all records conform to the schema
 
 To this end, we end up with a format of families that all adhere to the Zed data
@@ -610,6 +610,8 @@ model but emulate the efficiency of Avro and Parquet.
 * ZNG is record-based like Avro
 * ZST is columnar like Parquet
 
+But they all conform to the same Zed data model.
+
 ## The ZNG Type Context
 
 ZNG works by including small typedefs in the binary stream every time
@@ -618,17 +620,18 @@ a type is needed by a record.
 These mappings are stored in a table called the "type context".
 
 The type context is
-* locally scoped so no need for a schema registery
-* mergeable so different streams with different type historys can merge, and
+* locally scoped so no need for a schema registry
+* mergeable so different streams with different type contexts can merge, and
 * concatenatable so streams can easily be processed.
 
 For example,
 ```
-echo '{a:1}' | zq -f zng - > example.zng
-echo '{s:"hello"}' | zq -f zng - >> example.zng
-hexdump -C example.zng
-cat example.zng example.zng example.zng | zq -
+echo '{a:1}' | zq -f zng - > example1.zng
+echo '{s:"hello"}' | zq -f zng - > example2.zng
+hexdump -C example1.zng example2.zng
+cat example1.zng example2.zng example2.zng example1.zng | zq -
 ```
+> Note `ff` end-of-stream marker.
 
 Armed with the type context, we can create ZST files where the columnar
 layout is
@@ -662,7 +665,6 @@ zq -f parquet "fuse" pile.zson > pile.parquet
 But now when we read it, it's not the same!
 ```
 zq -Z -i parquet pile.parquet
-zq -Z  pile.zson
 ```
 
 ## The Zed Format Family
