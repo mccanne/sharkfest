@@ -668,28 +668,6 @@ zapi query "from demo.pcap" > demo.zng
 zq -f ndjson demo.zng > demo.ndjson
 ls -lh demo.*
 ```
-## The Takeaway Revisited
-
-The mechanism/policy problem should be clear now:
-* Either data has a schema OR it doesn't
-* You have a list of JSON objects (like Elastic) or you have tables (like a warehouse).
-* The underlying formats are intertwined the schema policies.
-
-In the world today, there is no "in between".
-
-This ties your hands because you have to define the schema of a thing before
-you can put the schema-less JSON data into the schema-ful thing.
-
-Clearly, Zed is all about creating the "in between":"
-* a gentle slope between JSON and relational tables
-* your hands are not tied
-* the cognitive overload of _always requiring_ a schema is gone
-
-Zed data is both like JSON and like relational tables, and anywhere in between.
-
-The takeaway:
-> Zed is all about _ergonomics_ for _data engineering_.
-> Zed makes it all easier.
 
 ## The Zed Lake
 
@@ -722,7 +700,10 @@ XXX drop this figure
 
 ![Git Storage Model](fig/git-model.png)
 
-Let's look at a few use cases...
+The Zed Lake's use cases are malleable through its API
+* the Zed service is not a monolithic black box
+* rich API for automation and tooling
+* let's look at a few use cases
 
 ## Automatic Insights through Programmable Analytics
 
@@ -825,9 +806,10 @@ A main/live branching model for streaming pipelines... work in progress.
 
 * Showed our new app Brim
 * Described the Zed data model underneath Brim that we stumbled upon while hacking PCAPs
-* Proposed that Zed
-    * unifies the document and relational models
-    * elegantly separates schema-policy from data-mechanism
+* Proposed that Zed can
+    * unify the document and relational models
+    * elegantly separate the schema-policy from data-mechanism
+    * be performant with its record- and columnar-based formats
 * Walked through how it all comes together in a Git-like Zed lake
 
 > Brim+Zed is bigger than just an app and search experience.
