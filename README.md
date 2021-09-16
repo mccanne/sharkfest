@@ -567,30 +567,34 @@ document model.
 
 ## ZSON Efficiency
 
-How could this text-based ZSON possibly compete with the columnar warehouse model?
+Ok, this separate of policy and mechanism argument sounds great, but how can
+you make this ZSON text format efficinet?
+
+Like JSON, ZSON must be horribly inefficient.
+
+And columnar data warehouses are really fast!
 * the wide-schema model has evolved over decades
 * modern data warehouses use all sorts of clever trick to make things fast
 
 Of course ZSON can't compete.
 
-Like JSON, ZSON is horribly inefficient.
-
 But maybe the Zed data model can!
 
 We simply need to steal the good ideas from Avro and Parquet...
+* [Avro](https://avro.apache.org/) from the Hadoop ecosystem
+* [Parquet](https://parquet.apache.org/) from Google's [Dremel paper](https://research.google/pubs/pub36632/)
 
-And leave out the bad ones...
+And leave out the rigid-schema bits...
 * Avro requires a schema for every record or completely uniform records
     * or a schema registery as mentioned earlier
 * Parquet requires a schema for each file where all records conform to the schema
 
 To this end, we end up with a format of families that all adhere to the Zed data
-model but emulate the efficient of Avro and Parquet.
+model but emulate the efficiency of Avro and Parquet.
 
 * ZSON is like JSON
-* ZNG is record-based like [Avro](https://avro.apache.org/) from the Hadoop ecosystem
-* ZST is columnar like [Parquet](https://parquet.apache.org/) from
-Google's [Dremel paper](https://research.google/pubs/pub36632/)
+* ZNG is record-based like Avro
+* ZST is columnar like Parquet
 
 ## The ZNG Type Context
 
@@ -614,8 +618,8 @@ cat example.zng example.zng example.zng | zq -
 
 Armed with the type context, we can create ZST files where the columnar
 layout is
-* not defined by an uber schema created before writing to the file,
-* but rather self-organizes around the types in the type context.
+* not defined by a single, wide schema created before writing to the file,
+* but rather self-organizes around the types in the type context on the fly.
 
 For example,
 ```
@@ -626,14 +630,14 @@ hexdump -C pile.zst
 You can see the column in the hexdump output.
 
 More importantly, the data model is exactly the same across format families,
-so we can boomerang around the formats without loss of information...
+so we can boomerang through the formats without loss of information...
 ```
 zq -f zng -i zst pile.zst > pile.zng
 zq -z pile.zng > pile-boomerang.zson
 diff pile.zson pile-boomerang.zson
 ```
 
-But you can't do a boomerang with Parquet...
+Of course, you can't do a boomerang with Parquet...
 ```
 zq -f parquet pile.zson > pile.parquet
 ```
@@ -660,14 +664,16 @@ data model: no loss of information transcoding between formats.
 
 ZNG typically 5-10X smaller than ZSON/JSON...
 ```
-ls -lh zeek.*
+zapi query "from demo.pcap" > demo.zng
+zq -f ndjson demo.zng > demo.ndjson
+ls -lh demo.*
 ```
 ## The Takeaway Revisited
 
 The mechanism/policy problem should be clear now:
 * Either data has a schema OR it doesn't
 * You have a list of JSON objects (like Elastic) or you have tables (like a warehouse).
-* The underlying formats are intertwined the schema policies.a
+* The underlying formats are intertwined the schema policies.
 
 In the world today, there is no "in between".
 
@@ -684,31 +690,6 @@ Zed data is both like JSON and like relational tables, and anywhere in between.
 The takeaway:
 > Zed is all about _ergonomics_ for _data engineering_.
 > Zed makes it all easier.
-
-## Zed through the Lense of Brim
-
-Let's go back to the Brim app and have another look at the UX in
-light of the Zed data model...
-
-* drag `tables.zng` into a new data pool
-    * Click on relational queries
-    * Show Zed versions
-    * SQL just a Zed expression: mixture of SQL and Zed
-* Open `demo.pcap` tab
-    * Note lack of column headers
-    * Pivot to `HTTP Requests` query and back
-    * Pivot to `Suricata Alerts` query and back
-* A UX challenge: mixed vs uniform records & shapes
-    * Click on Buggy Zed query
-        * Problem in current app
-        * Not handling unions quite right yet (coming see)
-        * Loss of column headers confusing to users
-
-Idea: _show "shapes" as icons of diverse records when columns headers go_
-
-> We believe designing UX for Zed is a rich and interesting area of work.
-> To our knowledge, this idea hasn't really been explored, likely due to the
-> siloed biased amidst existing data models.
 
 ## The Zed Lake
 
@@ -767,7 +748,6 @@ from demo.pcap
                 validation_status=="" OR validation_status==null))
    by id.resp_h,id.orig_h
 ```
-(note "canonical form" instead of short-hand Zed)
 
 Because everything is driven off the API, it is easy to run
 this automation at periodic intervals and populated a data pool with
@@ -830,8 +810,6 @@ zapi merge main
 
 ## Live Ingest
 
-> Skip if short on time.
-
 A main/live branching model for streaming pipelines... work in progress.
 
 ![Main/live Branching for Ingest](fig/main-live.png)
@@ -846,15 +824,15 @@ A main/live branching model for streaming pipelines... work in progress.
 ## Summary
 
 * Showed our new app Brim
-* Described the Zed data model we stumbled upon while hacking PCAPs
-* Proposed that Zed unifies the document and relational models
+* Described the Zed data model underneath Brim that we stumbled upon while hacking PCAPs
+* Proposed that Zed
+    * unifies the document and relational models
+    * elegantly separates schema-policy from data-mechanism
 * Walked through how it all comes together in a Git-like Zed lake
-* Closed with a novel model for live, streaming ingest based on branching
 
-So, do you buy our takeaway?
-
-> Zed is all about _ergonomics_ for _data engineering_.
-> Zed makes it all easier.
+> Brim+Zed is bigger than just an app and search experience.
+> There's something up the data model we found underneath it all.
+> We think Zed is all about _ergonomics_ for easier _data engineering_.
 
 ### Join in the fun!
 
