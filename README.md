@@ -49,11 +49,13 @@ transactionally consistent views across distributed workers.
 
 > Feel free to follow along at [github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest) XXX move to brimdata
 
+> Drag pcap to start the import...
+
 * Some ancient history: PCAP, BPF, tcpdump
 * Ten years ago: [Stanford Sharkfest '11](https://sharkfestus.wireshark.org/sf11) and Riverbed
 * Present: [Brim](https://github.com/brimdata/brim) and [Zed](https://github.com/brimdata/zed)
     * Zed: stumbling on a new data model through PCAP hacking
-    * Like [Crockford](https://youtu.be/-C-JoyNuQJs?t=20), Zed was _discovered_ not _invented_
+    * Like [Crockford and JSON](https://youtu.be/-C-JoyNuQJs?t=20), Zed was _discovered_ not _invented_
 
 ## Some Pushback
 
@@ -61,7 +63,7 @@ About 18 months ago, we got some early feedback from smart people...
 
 > Steve... the world doesn't need another data model.
 
-> Steve... the world ESPECIALLY doesn't need another query language.  Use SQL.
+> Steve... the world REALLY doesn't need another query language.  Use SQL.
 
 > Steve... no one cares about your tech.  What problem are you solving?
 
@@ -80,13 +82,15 @@ Another community user tweeted:
 
 ![Brim is Beautiful](fig/brim-beautiful.png)
 
-Underneath all this is the key takeaway for this talk:
+Underneath all this lies the key takeaway for this talk:
 
-XXX
-> Bigger than just an app and search experience.
-> Something up the data model was underneath it all.
-> Zed is all about _ergonomics_ for _data engineering_.
-> Zed makes it all easier.
+> Brim+Zed is bigger than just an app and search experience.
+> There's something up the data model we found underneath it all.
+> We think Zed is all about _ergonomics_ for easier _data engineering_.
+
+Zed is to data lakes as JSON was to APIs.
+
+It's hard to make things easy.
 
 ## Zed & Brim
 
@@ -113,27 +117,22 @@ While the PCAP is loading, here is the wiring behind the scenes...
 
 ![App Architecture](fig/app-arch.png)
 
+> Note: in upper left, size of logs from 4GB pcap and time span
+
 * Brim is
     * A search tool
         * `160.176.58.77` - search of an IP
         * `181.42.0.0/16` - search for IPs in a network
         * `weird` - show me Zeek's weird logs
-        * cut and paste a UID back in the search bar
+        * `alert spam` look for who knows what
     * An analytics engine
         * `count() by network_of(id.resp_h)`
         * `count() by query`
+        * `_path=="conn" | bytes:=sum(orig_bytes+resp_bytes) by id.resp_p | sort -r bytes`
         * `count() by _path`
         * `every 10s count() by _path`
-            * (try different intervals)
+            * (try different intervals, 24h, 1w)
             * This is the query the app uses to create the bar chart.
-        * `count() by id`
-            * Hey, what's the junk?
-            * Why are the column headers gone?
-            * Zed is very forgiving: Zeek uses `id` for different things.
-        * Tease apart with: `type port=uint16 ; is(id,type({orig_h:ip,orig_p:port,resp_h:ip,resp_p:port})) | count() by id`
-            * Not your typical query, but shows the power of Zed
-        * If you're curious what's the junk that uses id in other ways...
-            * Fix: `type port=uint16 ; has(id) !is(id,type({orig_h:ip,orig_p:port,resp_h:ip,resp_p:port})) | count() by _path`
     * A learning tool - beginner shouldn't have to know this complex queries
         * Right-click filter by
         * Right-click count by
@@ -214,8 +213,9 @@ Make sure all data conforms to pre-design set of schemas (show schemas on figuer
 ## Schemas Complicate Things
 
 We have thought a lot about what makes these systems brittle and difficult
-and have concluded it's the schemas:
-> Schemas are fantastic as a _policy_ for organizing your data,
+and have concluded that the schemas over-constrain the interfaces between components:
+
+> Schemas are fantastic as an organizing _policy_ for your data,
 > but they get in the way as a _mechanism_ for data storage and transport.
 
 ### Example 1
@@ -307,7 +307,7 @@ In all of the above examples:
 
 An old design principle says you should separate _policy_ from _mechanism_ ...
 
-Could this be good advice here?  The examples above are all pretty gunky.
+Could this be good advice here?
 
 ## Zed: A Better Way
 
@@ -316,9 +316,10 @@ What if _the mechanism_ were _self-describing data_:
 * A comprehensive _type system_ embedded in the data itself
 * First-class types for "types as values"
 * Entities adapt to data types
-    * instead of being constrained by fixed set of schemas
+    * instead of being constrained by a rigid set of schemas
 
-And what if _the policy_ were enforced externally by the _type system_?
+And what if _policy_ was enabled by the flexible Zed _type system_
+instead of rigid schemas?
 
 Before we can explain how this will work, let's give a quick tour
 of the Zed data model.
@@ -395,8 +396,8 @@ zq -Z values.zson
 What we _don't do here_ is define a schema then fit the values into
 the schema.
 * Data is always self describing.
-* No need to declare types explicitl.
-* The Zed query language lets you operate on Zed data:
+* No need to declare types explicitly.
+* As in Brim, the Zed query language lets you operate on Zed data:
 ```
 zq -Z "cut v1,v2,v0:=v1+v2,v7,net:=network_of(v7)" values.zson
 ```
@@ -406,7 +407,7 @@ zq -Z "cut v1,v2,v0:=v1+v2,v7,net:=network_of(v7)" values.zson
 
 ## First-class Types
 
-* We don't fit the values into a schema, but the values imply a "type"
+* We don't fit the values into a schema; the values imply a "type"
 * Zed _types_ are Zed _values_
 * The `typeof` operator can be applied to any field, e.g.,
 ```
@@ -433,6 +434,8 @@ Isn't this exactly a relational schema?
 
 ## Converging the Document and Relational Models
 
+So this feels like a promising direction to converge the document and relational models.
+
 Many relational tables start out as CSV.
 
 Let's make some sample data:
@@ -450,7 +453,7 @@ zq -z -i csv "type employee = {name:string,city:string,phone:string,salary:float
 zq -z junk.zson >> pile.zson
 ```
 
-Ok, let's get this file into Brim.
+Ok, let's get this file to Brim.
 
 Instead of dragging it in, we'll go though the API with `zapi`.
 > Remember there is `zed lake serve` process running to support Brim.
@@ -461,14 +464,21 @@ zapi use PileOfStuff@main
 zapi load pile.zson
 ```
 
-Now we can query it in Brim
+Brim doesn't really know what to make of it.
+* It doesn't look like Zeek or Suricata
+* It doesn't have timestamps
+* There's no single schema to organize it in a table.
+
+But we can query it in Brim... since I was told to use SQL, we made Zed
+a superset of SQL...
 ```
 SELECT * FROM employee
+SELECT * FROM employee | cut typeof(this)
 SELECT name,salary FROM employee WHERE salary >= 250000 ORDER by salary DESC
 SELECT * FROM deal
 SELECT name, sum(forecast) as forecast FROM deal GROUP BY name ORDER BY forecast DESC
 SELECT name, union(forecast) as deals, sum(forecast) as total FROM deal GROUP BY name ORDER BY total DESC
-SELECT d.name AS name, e.phone as phone, d.customer as customer FROM deal d JOIN employee e ON d.name=e.name
+SELECT d.customer as customer, d.name AS name, e.phone as phone FROM deal d JOIN employee e ON d.name=e.name
 ```
 Note all the queries worked just fine with the junk in the way!
 
@@ -478,7 +488,6 @@ and the data is not stored in a fixed-schema relational table (_mechanism_).
 James, from our team, summarized it nicely:
 > So to summarize my understanding, a database has a mechanism to write data to disk. It also has a policy that data in a table must conform to a schema. Therefore to use the “write data to disk” mechanism, that data must conform to the policy of the table’s schema.
 > With Zed, data need not conform to any policy before it gets saved to disk. Then later a policy can deem certain types of data valid based on its shape.
-
 
 ## Instrospection the Schema from the Data
 
@@ -505,6 +514,11 @@ Let's put the clean data in a new pool...
 ```
 zapi create CleanTables
 zapi query "from PileOfStuff@main | is(type(deal)) or is(type(employee))" | zapi load -use CleanTables@main -
+```
+Now if I look at the shapes in the clean table, I can confirm it worked:
+```
+count() by typeof(this)
+```
 
 ## Instrospection in the PCAP data
 
