@@ -90,8 +90,6 @@ Underneath all this lies the key takeaway for this talk:
 
 Our audacious goal: Zed is to data lakes as JSON was to APIs.
 
-It's hard to make things easy.
-
 ## Zed & Brim
 
 Zed and Brim have been the driver for tackling the complexity of data engineering...
@@ -126,10 +124,9 @@ While the PCAP is loading, here is the wiring behind the scenes...
         * `weird` - show me Zeek's weird logs
         * `alert spam` look for who knows what
     * An analytics engine
-        * `count() by network_of(id.resp_h)`
+        * `count() by _path`
         * `count() by query`
         * `_path=="conn" | bytes:=sum(orig_bytes+resp_bytes) by id.resp_p | sort -r bytes`
-        * `count() by _path`
         * `every 10s count() by _path`
             * (try different intervals, 24h, 1w)
             * This is the query the app uses to create the bar chart.
