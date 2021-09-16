@@ -307,9 +307,6 @@ In all of the above examples:
 
 An old design principle says you should separate _policy_ from _mechanism_ ...
 
-James, from our team, summarized it nicely:
-> So to summarize my understanding, a database has a mechanism to write data to disk. It also has a policy that data in a table must conform to a schema. Therefore to use the “write data to disk” mechanism, that data must conform to the policy of the table’s schema.
-
 Could this be good advice here?  The examples above are all pretty gunky.
 
 ## Zed: A Better Way
@@ -322,9 +319,6 @@ What if _the mechanism_ were _self-describing data_:
     * instead of being constrained by fixed set of schemas
 
 And what if _the policy_ were enforced externally by the _type system_?
-
-From James:
-> With Zed, data need not conform to any policy before it gets saved to disk. Then later a policy can deem certain types of data valid based on its shape.
 
 Before we can explain how this will work, let's give a quick tour
 of the Zed data model.
@@ -437,7 +431,7 @@ echo '{name:"Sally",city:"Berkeley",salary:350000.}(=employee)' | zq -Z "cut typ
 ```
 Isn't this exactly a relational schema?
 
-## Converging the Document and Relations Models
+## Converging the Document and Relational Models
 
 Many relational tables start out as CSV.
 
@@ -452,7 +446,7 @@ cat deals.csv
 cat values.zson
 
 zq -z -i csv "type deal = {name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv > pile.zson
-zq -z -i csv "type employee = {name:string,city:string,phone:uint32,salary:float64}; this:=cast(this,employee)" employees.csv >> pile.zson
+zq -z -i csv "type employee = {name:string,city:string,phone:string,salary:float64}; phone:=int64(phone) | this:=cast(this,employee)" employees.csv >> pile.zson
 zq -z junk.zson >> pile.zson
 ```
 
@@ -468,283 +462,171 @@ zapi load pile.zson
 ```
 
 Now we can query it in Brim
-* 'SELECT name FROM employee WHERE salary >= 250000'
+```
+SELECT * FROM employee
+SELECT name,salary FROM employee WHERE salary >= 250000 ORDER by salary DESC
+SELECT * FROM deal
+SELECT name, sum(forecast) as forecast FROM deal GROUP BY name ORDER BY forecast DESC
+SELECT name, union(forecast) as deals, sum(forecast) as total FROM deal GROUP BY name ORDER BY total DESC
+SELECT d.name AS name, e.phone as phone, d.customer as customer FROM deal d JOIN employee e ON d.name=e.name
+```
+Note all the queries worked just fine with the junk in the way!
 
-## Data Intropection, Discovery, and Shaping
+This is because the _Zed type_ defines the table at query time (_policy_),
+and the data is not stored in a fixed-schema relational table (_mechanism_).
 
-Given first-class types, Henri had a brilliant idea:
+James, from our team, summarized it nicely:
+> So to summarize my understanding, a database has a mechanism to write data to disk. It also has a policy that data in a table must conform to a schema. Therefore to use the “write data to disk” mechanism, that data must conform to the policy of the table’s schema.
+> With Zed, data need not conform to any policy before it gets saved to disk. Then later a policy can deem certain types of data valid based on its shape.
+
+
+## Instrospection the Schema from the Data
+
+Because Zed types are also values, we can put a type anywhere a value
+goes... in particular a group-by key.
+
+Henri had the idea a year ago to do data-shape introspection
+with this clever operation:
 ```
 count() by typeof(this)
 ```
-* _this_ refers to the current record in a declarative fashion
-* Here, we count each unique _data shape_ in the input
-* Super powerful tool for data introspection
+And now we can clearly see the junky shapes.
 
-Let's try this out on some Zeek logs:
+And we can filter the junky values with this:
 ```
-zq -Z "count() by typeof(this)" zeek.zng
+is(type({a:string,b:string,c:string})) or is(type({message:string}))
 ```
-Ok, that's powerful but it would be more intuitive to see a sample
+And the clean data is
+```
+not (is(type({a:string,b:string,c:string})) or is(type({message:string})))
+```
+```
+Let's put the clean data in a new pool...
+```
+zapi create CleanTables
+zapi query "from PileOfStuff@main | is(type(deal)) or is(type(employee))" | zapi load -use CleanTables@main -
+
+## Instrospection in the PCAP data
+
+So let's go back to the pcap data in the app and run Henri's query:
+```
+count() by typeof(this)
+```
+
+Ok, that's really powerful but it would be more intuitive to see a sample
 value of each type...  you can use the _any_ aggregator!
 ```
-zq -Z "any(this) by typeof(this) | cut any" zeek.zng
+any(this) by typeof(this) | cut any
 ```
 We love this so much we call it _sample_:
 ```
-zq -Z "sample" zeek.zng
+sample
 ```
-And you can sample a field too...
+You can sample a field too...
 ```
-zq -Z "sample id" zeek.zng
+sample uid
+sample query
+sample id.orig_h
 ```
+But if we go back the top level, we could see what the data would look like
+if we tried to fuse the shapes all into one uber schema using the `fuse` operator...
+```
+sample | fuse
+```
+And here is an important insight:
+> This ultra wide table with many columns is precisely how data warehouses work
+> (or Parquet files that hold lots of columns).  You define a single, very-wide schema
+> to hold any possible field that might show up, and as long as your ETL logic
+> can find a slot in this _single_ schema for all the fields of an incoming record,
+> everything is fine.  But when a field shows up that doesn't fit, you get
+> problems.  Data warehouse compress all the null columns really well, and
+> and perform really well for column-oriented analytics queries.
 
-## Types and Data Shaping
-
-First-class types can be used to "shape" messy data into clean data.
-
-But in Zed, clean data doesn't have to live in a relational table.
-
-> Shaping is like the L in ELK, logstash, but we use Zed to do it.
-
-Shaping functions take a value and a target type.
-
-> Shaping is a rich problem and an area of active work and will evolve.
-
-* `crop` - drop fields to fit target type
-* `fill` - add fields with nulls to fit target
-* `order` - reorder fields in record to fit target
-* `cast` - cast each input field to the corresponding target type
-
-And `shape` is a mixture all of the above.
-
-Examples:
-```
-echo '{a:1,b:"foo"}' | zq -Z "this:=crop(this,type({a:int64}))" -
-echo '{a:1}' | zq -Z "this:=fill(this,type({a:int64,b:string}))" -
-echo '{b:"foo",a:1}' | zq -Z "this:=order(this,type({a:int64,b:string}))" -
-echo '{a:"128.32.1.1",b:1}' | zq -Z "this:=cast(this,type({a:ip,b:string}))" -
-```
-Example of shaping:
-```
-zq -Z messy.zson
-cat shape.zed
-zq -Z -I shape.zed messy.zson
-```
-## Zed is a Superset of Relational Tables
-
-zq "SELECT name WHERE salary >= 250000" employee.zson
-```
-
-Note that the output _table_ here is just a Zed type.
-```
-zq "SELECT name WHERE salary >= 250000" employee.zson | zq -Z "by typeof(this)" -
-```
-* There's no need for ODBC, JDBC, etc.
-* The output is just a self-describing, Zed stream that _happens to be a table_.
-
-Let's look at another CSV...
-```
-zq -Z -i csv deals.csv
-```
-This time we'll clean it up through _shaping_:
-```
-zq -Z -i csv "type deal = {id:int64,name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv
-```
-* Note importantly the `(=deal)` type definition.
-* This is just like the name of a relational table, right?
-
-Let's shape both of the CSVs into a new file "tables.zson"...
-```
-zq -z -i csv "type deal = {id:int64,name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv > tables.zson
-zq -z -i csv "type employee = {id:int64,name:string,city:string,phone:int64,salary:float64}; this:=cast(this,employee)" employee.csv >> tables.zson
-```
-
-## SQL Tables as Zed Types
-And now we have two relational tables called `deal` and `employee` in one ZSON file:
-```
-cat tables.zson
-zq -Z "by typeof(this)" tables.zson
-```
-
-We can simply add a "FROM" clause to refer to a table by its type name:
-```
-zq -f table "SELECT name FROM employee WHERE salary >= 250000" tables.zson
-zq -f table "SELECT name FROM deal WHERE forecast >= 200000" tables.zson
-```
-Of course, there is an easier way given the mixed nature of the Zed data model...
-```
-zq -f table "salary >= 250000 or forecast >= 200000" tables.zson
-```
-SQL doesn't let you mix tables like this so easily... you have to do complicated JOINs.
-
-## SQL/Zed Joins
-
-Since tables are just types, you can do JOINs in Zed too!
-
-```
-zq -f table "SELECT e.name AS NAME, d.forecast AS FORECAST FROM employee e JOIN deal d ON e.name=d.name" tables.zson
-```
-* You can compute aggregations too, of course.
-* Let's sum up the forecast by employee
-```
-zq -f table "SELECT e.name AS NAME, sum(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" tables.zson
-```
-* Unlike SQL, Zed has _sets_ and set operators
-* So you can do a set-union of the forecast instead of sum:
-```
-zq -f table "SELECT e.name AS NAME, union(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" tables.zson
-```
-Here it is in ZSON...
-```
-zq -z "SELECT e.name AS name, union(d.forecast) AS forecast FROM employee e JOIN deal d ON e.name=d.name GROUP BY name" tables.zson
-```
-The `|[ ... |]` syntax indicates a set as we mentioned earlier.
-
-## Converging the Models
-
-ZSON is perfectly happy to have all this data together as the type
-system let's us manage it all...
-```
-cat tables.zson values.zson > kitchen-sink.zson
-zq -Z "by typeof(this)" asink.zson
-```
-And I can still run my SQL queries on the heterogenous data...
-```
-zq -f table "SELECT e.name AS NAME, sum(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" kitchen-sink.zson
-```
+* No wonder there is such a big gap between the relational model and the
+document model.
+* The two forms of data look nothing alike!
 
 ## ZSON Efficiency
 
-So, have I convinced you ZSON unifies the document and relational models?
+How could this text-based ZSON possibly compete with the columnar warehouse model?
+* the wide-schema model has evolved over decades
+* modern data warehouses use all sorts of clever trick to make things fast
 
-_Maybe_, but isn't this format incredibly inefficient compare to
-relational tables, Parquet, Avro, etc?
+Of course ZSON can't compete.
 
 Like JSON, ZSON is horribly inefficient.
 
-How is this not a solved problem?!
+But maybe the Zed data model can!
 
-* [Avro](https://avro.apache.org/) came out of the Hadoop ecosystem
-as an efficient representation of semi-structured, binary data compared
-to JSON or CSV
-* [Parquet](https://parquet.apache.org/) came from
+We simply need to steal the good ideas from Avro and Parquet...
+
+And leave out the bad ones...
+* Avro requires a schema for every record or completely uniform records
+    * or a schema registery as mentioned earlier
+* Parquet requires a schema for each file where all records conform to the schema
+
+To this end, we end up with a format of families that all adhere to the Zed data
+model but emulate the efficient of Avro and Parquet.
+
+* ZSON is like JSON
+* ZNG is record-based like [Avro](https://avro.apache.org/) from the Hadoop ecosystem
+* ZST is columnar like [Parquet](https://parquet.apache.org/) from
 Google's [Dremel paper](https://research.google/pubs/pub36632/)
-to apply data warehouse-style columnar formats to semi-structured data.
 
-## Zed and Parquet
+## The ZNG Type Context
 
-We actually support Parquet inside of Zed so let's just reformat
-our table data as Parquet:
+ZNG works by including small typedefs in the binary stream every time
+a type is needed by a record.
+
+These mappings are stored in a table called the "type context".
+
+The type context is
+* locally scoped so no need for a schema registery
+* mergeable so different streams with different type historys can merge, and
+* concatenatable so streams can easily be processed.
+
+For example,
 ```
-zq -f parquet -o tables.parquet tables.zson
-```
-Oops, that didn't work
-* Have to specify schema before you can write to the format
-* Schema must be same for all records in the file
-* Policy and mechanism intertwined
-
-So, we can fuse...
-```
-zq -f parquet -o tables.parquet "fuse" tables.zson
-```
-But _I had to change the data_ to shoehorn it into Parquet's assumption:
-```
-zq -Z -i parquet sample tables.parquet
-```
-versus
-```
-zq -Z sample tables.zson
-```
-The data is different!
-
-The fundamental disconnect:
-* Parquet is a sequence of homogeneous records defined by a single schema
-* Zed is a sequence of self-describing, heterogeneous records
-
-## What about Avro?
-
-Avro has the same problem: a single schema defines the homogeneous sequence
-of records.
-
-Confluent solves this for Kafka with its _schema registry_.
-
-Here's a [diagram from stackoverflow](https://stackoverflow.com/questions/51609807/schema-registry-kafka-how-could-i-integrate-it-into-java-project):
-
-![Avro with Schema Registy](fig/59AMm.png)
-
-This is ok, but either
-* you send the schema with every value, or
-* you have this clunky interaction with a schema registry.
-
-This is not the Zed data model...
-
-## Is there a better way?
-
-> To make Zed efficient, we need to capture the notion of its self-describing
-> structure in an efficient, compact, binary representation.
-
-The new idea: a _type context_
-
-Inspired by Zeek TSV: put the schemas in the data!
-```
-#fields	ts              uid                     id.orig_h       id.orig_p ...
-#types  time            string                  addr            port      ...
-1521911721.255387	C8Tful1TvM3Zf5x8fl	10.164.94.120	39681 ...
-1521911721.411148	CXWfTK3LRdiuQxBbM6	10.47.25.80	50817 ...
+echo '{a:1}' | zq -f zng - > example.zng
+echo '{s:"hello"}' | zq -f zng - >> example.zng
+hexdump -C example.zng
+cat example.zng example.zng example.zng | zq -
 ```
 
-Like Avro but with embedded, incremental fine-grained type bindings...
+Armed with the type context, we can create ZST files where the columnar
+layout is
+* not defined by an uber schema created before writing to the file,
+* but rather self-organizes around the types in the type context.
 
-![Type Context](fig/type-context.png)
-
-## ZNG: An efficient binary form of ZSON
-
-The type context subsumes the schema registry.
-
+For example,
 ```
-zq -f zng -o tables.zng tables.zson
+cat pile.zson
+zq -f zst pile.zson > pile.zst
+hexdump -C pile.zst
+```
+You can see the column in the hexdump output.
+
+More importantly, the data model is exactly the same across format families,
+so we can boomerang around the formats without loss of information...
+```
+zq -f zng -i zst pile.zst > pile.zng
+zq -z pile.zng > pile-boomerang.zson
+diff pile.zson pile-boomerang.zson
 ```
 
-## ZST: A Columnar Format for Zed
-
-Armed with the type context, a columnar structure can be derived where
-the columns self-organize around the type system
-* separation of schema-silo from data...
-* heterogeneous sequence of records _of any type_
-* columns self-organized around record types
-
-![ZST Layout](fig/zst.png)
-
+But you can't do a boomerang with Parquet...
 ```
-zq -f zst tables.zson > tables.zst
-hexdump -C tables.zst
+zq -f parquet pile.zson > pile.parquet
 ```
-You can see the columnar layout in the hex dump.
-
-And the data didn't have to change to go into column format even
-retaining the orginal order of records...
+Oops, it needs a single uber-schema, but we can get that with `fuse`
 ```
- zq -i zst tables.zst
- ```
-
-#### Relational tables and ZST
-
-Remember `kitchen-sink.zson`?  What if we convert this to ZST?
+zq -f parquet "fuse" pile.zson > pile.parquet
 ```
-zq -f zst kitchen-sink.zson > kitchen-sink.zst
-hexdump -C kitchen-sink.zst
+But now when we read it, it's not the same!
 ```
-Some magic happens here...
-* The relational tables self organize into groups of ZST columns
-* They are stored as efficiently as Parquet or any data warehouse columnar store
-* There was no need to define schemas in the storage system to receive the tables
-And a query planner could then optimize and execute a query and read
-just the needed columns just like any modern data warehouse:
+zq -Z -i parquet pile.parquet
+zq -Z  pile.zson
 ```
-zq -i zst -f table "SELECT e.name AS NAME, sum(d.forecast) AS FORECAST FROM employee e JOIN deal d ON e.name=d.name GROUP BY NAME" kitchen-sink.zst
-```
-> Our optimizing query planner for Zed is under development and an
-> active area of work.
 
 ## The Zed Format Family
 
@@ -757,13 +639,8 @@ There you have it... the Zed format family
 They are all perfectly compatible because they all adhere to the same
 data model: no loss of information transcoding between formats.
 
+ZNG typically 5-10X smaller than ZSON/JSON...
 ```
-zq -i zst -f zng tables.zst > tables-recon.zng
-diff tables.zng tables-recon.zng
-```
-ZNG typically 5-10X smaller than ZSON/JSON (for large files)...
-```
-ls -lh tables.*
 ls -lh zeek.*
 ```
 ## The Takeaway Revisited
@@ -826,61 +703,26 @@ Enter the Zed Lake.
 ## Native cloud design
 
 Built on a cloud storage model...
-* No use of costly key lookups
 * Objects are stored as ZNG/ZST, immutable, and have globally unique name
 * Search indexes are just ZNG objects (with simple b-tree indexing)
-* All state changes to the lake view stored in a transaction journal
-
-The Zed lake is somewhere in between a set of relational tables
-and document store for semi-structured search.
-
-## Attractive Properties
-
-* Easy caching
-    * Workers can cache _everything_ since since everything is immutable and has a globally unique name
-* No zookeeper
-    * Cloud storage semantics provide consistency
-    * Workers can do a consistency check with a single object lookup (one RTT)
-* Data objects and commit objects stored separately
-    * Easy versioning, backup, and retention policies
-    * Time travel via commit history
+* All state changes to the lake view stored in a cloud-based transaction journal
 
 ## The Git Design Pattern
 
 We realized many compelling use cases could be supported by a Git-like
 model for the Zed lake.
+* Create branches
+* Work on a branch, test, debug
+* Merge branch to main or drop
+
+In particular, _automation_ and _orchestration_ can use branches for
+flexible configurations of live ingest.
+
+XXX drop this figure
 
 ![Git Storage Model](fig/git-model.png)
 
-So what can you do with the lake?
-> zapi -h
-
-## Branching Basics
-
-```
-zapi create Test
-zapi use Test@main
-echo '{a:1}' | zapi load -
-zapi branch B
-echo '{b:2}' | zapi load -use Test@B -
-zapi query "*"
-zapi use B
-zapi merge main
-zapi query "from Test@main"
-zapi use main
-echo '{c:3}' | zapi load -
-zapi query "*"
-# find merge and undo it
-zapi log
-zapi revert  <id>
-# b record now gone on main
-zapi query "*"
-zapi log
-# b record still on branch B
-zapi query "from Test@B"
-# finally, reach back to before revert commit and B record comes back on main
-zapi query "from Test@<id>"
-```
+Let's look at a few use cases...
 
 ## Automatic Insights through Programmable Analytics
 
