@@ -71,7 +71,7 @@ About 18 months ago, we got some early feedback from smart people...
 * I couldn't really articulate it yet, but I felt we were onto something.
 * We're just getting to the point where we can rationalize it all...
 
-## Key Takeaway
+## Our Audacious Goal
 
 Along the way, we built useful stuff and have anecdotal validation
 from our user community that we're doing something right...
@@ -88,7 +88,7 @@ Underneath all this lies the key takeaway for this talk:
 > There's something up with the data model we found underneath it all.
 > We think Zed is all about _ergonomics_ for easier _data engineering_.
 
-Zed is to data lakes as JSON was to APIs.
+Our audacious goal: Zed is to data lakes as JSON was to APIs.
 
 It's hard to make things easy.
 
@@ -204,12 +204,6 @@ Yet, search alone is usually not enough...
 
 ![Bifurcated Search/Analytics](fig/bifurcated.png)
 
-XXX add this to figure above...
-Make sure all data conforms to pre-design set of schemas (show schemas on figuer)
-* Elastic can recover rich structure even with JSON intermediary
-* Analytics organized around relational table with schemas
-* Parquet files with schemas for efficient columnar analytics
-
 ## Schemas: A Double-edged Sword
 
 Schemas are really quite useful
@@ -219,7 +213,7 @@ Schemas are really quite useful
 
 But they a double-edge sword:
 
-> Schemas are fantastic as an organizing _policy_ for your data,
+> Schemas are essential as an organizing _policy_ for your data,
 > but they get in the way as a _mechanism_ for data storage and transport.
 
 ### Example 1
@@ -229,10 +223,7 @@ The ETL pipeline breaks when something changes
 * The plugin adds a new field to Zeek "conn logs"
 * The ETL doesn't have a schema with for that new column
 
-(show figure)
-
-_The data-organizing policy is a relational schema
-and the mechanism is a relational table._
+(TODO show figure)
 
 ### Example 2
 
@@ -251,22 +242,12 @@ Elastic Common Schema (ECS) is a type-rich schema system:
 So we have this song and dance:
 ![Zeek talking to Elastic](fig/foo-bar.png)
 
-(TODO update figure to show Zeek Log -> JSON -> ECS Log and mapping setup)
-
-[Corelight's ECS mapping repo](https://github.com/corelight/ecs-mapping)
-
-_The data-organizing policy is an ECS schema
-and the mechanism is a store of ECS-schema data objects._
-
 ### Example 3
 
 Writing data to a Parquet file on S3:
 * Scan all records in input to determine schema
 * Open the Parquet file with the schema
 * Write records that conform to schema
-
-_The data-organizing policy is a Parquet schema and the mechanism is a file of
-records that all conform to the Parquet schema._
 
 ### Example 4
 
@@ -285,23 +266,12 @@ Here's a [diagram from stackoverflow](https://stackoverflow.com/questions/516098
 
 ![Avro with Schema Registy](fig/59AMm.png)
 
-_The data-organizing policy is a set of Avro schemas and the
-mechanism is a sequence of records encoded with these schemas."
-
 ### Example 5
 
 Your business is a complex application with complex data pipelines:
-* the data models are all defined as protobuf schemas
+* the data models are all defined as _protobuf_ schemas called _protos_
 * the system components all communicate using protobuf-compiled gRPC endpoints
 * every time a model is updated, everything needs to be recompiled and redeployed
-
-_The data-organizing policy is a set of protobuf schemas and the mechanism is
-a communication stub that adheres to the same protobuf schemas_
-
-> Aside: a good friend of mine is an analytics engineer and they organize their
-> pipelines around protobufs and he told me "managing all the protos in the face
-> of ongoing change is really hard, especially when the protos extend into
-> other domains like Amazon services".
 
 ## Policy & Mechanism
 
@@ -319,7 +289,7 @@ What if _the mechanism_ were _self-describing data_:
 
 * A comprehensive _type system_ embedded in the data itself
 * First-class types for "types as values"
-* Entities adapt to data types
+* Entities in the Zed system adapt to data types
     * instead of being constrained by a rigid set of schemas
 
 And what if _policy_ was enabled by the flexible Zed _type system_
@@ -343,8 +313,8 @@ Like the `docker` command, everything packaged under the `zed` command.
 
 Here are a just few:
 
-* `zed query` - perform Zed queries and analytics files and Unix streams
-* `zed api`- execute commands via the Zed lake service
+* `zed query` - perform Zed queries and analytics on files and Unix streams
+* `zed api`- execute commands on a remote Zed lake service (or localhost)
 * `zed lake serve` - run a service endpoint for a "Zed lake"
 * We have a couple shortcuts:
     * `zq` for `zed query` (play on `jq` if you know that tool)
@@ -358,7 +328,7 @@ in pretty-printed ZSON.
 ```
 echo "..." | zq -Z -
 ```
-We leveraged the simplicity of JSON:
+We leveraged the familiarity and simplicity of JSON:
 * *Zed is a superset of JSON*
 * The human-readable form of Zed is called *ZSON*
 * We can take JSON/ZSON as input and pretty-print it:
@@ -374,11 +344,18 @@ And're fully compatible with all of JSON's corner cases:
 echo '{"":{}}' | zq -Z -
 ```
 
-## Zed is statically typed
+`zq` supports a bunch of formats so you can output to JSON and other formats:
+```
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -f json -
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -f csv -
+echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -f zeek -
+```
+
+## Zed is Comprehensive
 
 Unlike JSON, Zed has a _comprehensive_ type system.
 
-Here is a ZSON record with a bunch of different types of values:
+Here is a ZSON record with a bunch of different types:
 ```
 zq -Z values.zson
 
@@ -391,7 +368,7 @@ zq -Z values.zson
         v7: 192.168.1.1,
         v8: 192.168.1.0/24,
         v9: [1,2,3],
-        v10: [1(uint32),2(uint32),3(uint32)],
+        v10: [1(int32),2(int32),3(int32)],
         v11: |["PUT","GET","POST"]| (=HTTP_Methods),
         v12: |{{"key1","value1"},{"key2","value2"}}|,
         v13: { a:1, r:{s1:"hello", s2:"world"}}
@@ -401,22 +378,32 @@ What we _don't do here_ is define a schema then fit the values into
 the schema.
 * Data is always self describing.
 * No need to declare types explicitly.
-* As in Brim, the Zed query language lets you operate on Zed data:
+* No external schema registry needed.
+
+As in Brim, the Zed query language lets you operate on Zed data:
 ```
-zq -Z "cut v1,v2,v0:=v1+v2,v7,net:=network_of(v7)" values.zson
+zq -Z "cut v1,v2,v7,sum:=v1+v2,net:=network_of(v7)" values.zson
 ```
+
+Most data structures from any modern language can be marshaled into ZSON
+without loss of information.
 
 > Zed has more types and "type unions", but I'll leave these details out of
 > this talk.  This is all documented in the [ZSON spec](https://github.com/brimdata/zed).
 
 ## First-class Types
 
-* We don't fit the values into a schema; the values imply a "type"
+* A Zed value always has a type
 * Zed _types_ are Zed _values_
 * The `typeof` operator can be applied to any field, e.g.,
 ```
 echo '{s:"hello"}' | zq -Z "typeof_s:=typeof(s)" -
 ```
+The type of a type value is type `type`:
+```
+echo '{s:"hello"}' | zq -Z "typeof_s:=typeof(s) | typeof_type:=typeof(typeof_s)" -
+```
+
 The special value "this" refers to the current record in a declarative style:
 ```
 echo '{s:"hello"}' | zq -Z "put copy:=this" -
@@ -425,8 +412,16 @@ Zed is strongly typed and `this` always implies its type:
 ```
 echo '{s:"hello"}' | zq -Z "put typeof_this:=typeof(this)" -
 ```
-Well that's starting to look like a schema... let's try something a little
-more complex:
+Well that's starting to look like a schema...
+
+Compare with JSON/Javascript:
+```
+node
+typeof({s:"hello"})
+```
+Hmm, that's not helpful here.
+
+Let's try something a little more complex:
 ```
 echo '{name:"Sally",city:"Berkeley",salary:350000.}' | zq -Z "cut typeof_this:=typeof(this)" -
 ```
@@ -435,6 +430,9 @@ And now, let's name the schema with a Zed typedef:
 echo '{name:"Sally",city:"Berkeley",salary:350000.}(=employee)' | zq -Z "cut typeof_this:=typeof(this)" -
 ```
 Isn't this exactly a relational schema?
+
+> This is really powerful because we can now get the schema from the data
+> and do not have to synchronize data values with some external schema definition.
 
 ## Converging the Document and Relational Models
 
@@ -492,23 +490,36 @@ Note all the queries worked just fine with the junk in the way!
 This is because the _Zed type_ defines the table at query time (_policy_),
 and the data is not stored in a fixed-schema relational table (_mechanism_).
 
+The schema
+* is neither required,
+* nor does it stop you
+from putting data into a Zed data pool.
+
 James, from our team, summarized it nicely:
 > So to summarize my understanding, a database has a mechanism to write data to disk. It also has a policy that data in a table must conform to a schema. Therefore to use the “write data to disk” mechanism, that data must conform to the policy of the table’s schema.
 > With Zed, data need not conform to any policy before it gets saved to disk. Then later a policy can deem certain types of data valid based on its shape.
 
-## Instrospection the Schema from the Data
+## Schema Discovery
 
-Let's riff on this model and talk about introspection.
+This separation principle is very powerful:
 
-Because Zed types are also values, we can put a type anywhere a value
-goes... in particular a group-by key.
+> Because data is allowed in without knowing its schema ahead of time,
+> you can use the same system to explore and discover the "shapes" of
+> data (i.e., their schemas) as well as run queries on cleaned up or
+> "shaped" data.
 
-Henri had the idea a year ago to do data-shape introspection
-with this clever operation:
+Zed's type system is a powerful mechanism here.
+
+Key insight from Henri:
+> Because Zed types are also values, we can put a type anywhere a value
+> goes... in particular, a type can be a group-by key.
+
 ```
 count() by typeof(this)
 ```
-And now we can clearly see the junky shapes.
+And now we can clearly see the junky shapes mixed in with our tables.
+
+> I love this query so much, I have it in my query library as `Shapes`.
 
 And we can filter the junky values with this:
 ```
@@ -516,7 +527,7 @@ is(type({a:string,b:string,c:string})) or is(type({message:string}))
 ```
 And the clean data is
 ```
-not (is(type({a:string,b:string,c:string})) or is(type({message:string})))
+is(type(deal)) or is(type(employee))
 ```
 Let's put the clean data in a new pool...
 ```
@@ -534,7 +545,6 @@ So let's go back to the pcap data in the app and run Henri's query:
 ```
 count() by typeof(this)
 ```
-I love this so much, I have a query in my library called `Shapes`
 
 Ok, that's really powerful but it would be more intuitive to see a sample
 value of each type...  you can use the _any_ aggregator!

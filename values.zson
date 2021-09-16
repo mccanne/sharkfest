@@ -7,7 +7,7 @@
         v7: 192.168.1.1,
         v8: 192.168.1.0/24,
         v9: [1,2,3],
-        v10: [1(uint32),2(uint32),3(uint32)],
+        v10: [1(int32),2(int32),3(int32)],
         v11: |["PUT","GET","POST"]| (=HTTP_Methods),
         v12: |{{"key1","value1"},{"key2","value2"}}|,
         v13: { a:1, r:{s1:"hello", s2:"world"}}
