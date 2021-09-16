@@ -220,7 +220,7 @@ The ETL pipeline breaks when something changes
 * The plugin adds a new field to Zeek "conn logs"
 * The ETL doesn't have a schema with for that new column
 
-(TODO show figure)
+![ETL Fail](fig/etl-problem.png)
 
 ### Example 2
 
@@ -259,9 +259,7 @@ Sending structured data over Kafka with Avro:
     * (or it retrieves the schema from a local cache)
 * Receiver decodes record data using schema
 
-Here's a [diagram from stackoverflow](https://stackoverflow.com/questions/51609807/schema-registry-kafka-how-could-i-integrate-it-into-java-project):
-
-![Avro with Schema Registy](fig/59AMm.png)
+![Avro with Schema Registy](fig/kavro.png)
 
 ### Example 5
 
