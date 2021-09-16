@@ -817,7 +817,11 @@ A main/live branching model for streaming pipelines... work in progress.
 
 We have a ways to go, but we hope...
 
+---
+
 **_Zed will be to data lakes what JSON was to APIs._**
+
+---
 
 Do you buy it?
 
