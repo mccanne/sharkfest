@@ -196,7 +196,7 @@ Yet, search alone is usually not enough...
 * We saw a recurring design pattern in large-scale deployments
 * Need for _historical analytics_
 * Bifurcated search/analytics model
-    *Search*: OpenSearch, Elastic, Splunk
+    * *Search*: OpenSearch, Elastic, Splunk
         * Unstructured logs or semistructured JSON
     * *Analytics*: in a lake or warehouse
         *  Relational tables, e.g, ClickHouse, BigQuery, Snowflake
