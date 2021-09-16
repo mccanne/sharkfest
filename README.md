@@ -203,7 +203,7 @@ Yet, search alone is usually not enough...
 
 ## Schemas: A Double-edged Sword
 
-Schemas are really quite useful
+Schemas are incredibly important
 * ETL uses them to clean up data
 * Warehouses uses relational schemas to organize data across tables
 * Elastic uses them to normalize data and recover type richness
@@ -336,7 +336,7 @@ Note the we drop the quotes from field names and use them only when necessary:
 ```
 echo '{"funny@name":1}' | zq -Z -
 ```
-And're fully compatible with all of JSON's corner cases:
+And we're fully compatible with all of JSON's corner cases:
 ```
 echo '{"":{}}' | zq -Z -
 ```
@@ -568,7 +568,7 @@ And here is an important insight:
 > to hold any possible field that might show up, and as long as your ETL logic
 > can find a slot in this _single_ schema for all the fields of an incoming record,
 > everything is fine.  But when a field shows up that doesn't fit, you have
-> problems.  Data warehouse can compress all the null columns efficiently,
+> problems.  Data warehouses compress all the null columns efficiently,
 > and perform column-oriented analytics really well.
 
 * No wonder there is such a big gap between the relational model and the
@@ -817,7 +817,7 @@ A main/live branching model for streaming pipelines... work in progress.
 
 We have a ways to go, but we hope...
 
-> Zed will be to data lakes what JSON was to APIs.
+**_Zed will be to data lakes what JSON was to APIs._**
 
 Do you buy it?
 
