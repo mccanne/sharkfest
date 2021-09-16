@@ -73,7 +73,7 @@ About 18 months ago, we got some early feedback from smart people...
 
 ## Our Audacious Goal
 
-Along the way, we built useful stuff and have anecdotal validation
+Despite the pushback, we built useful stuff and have anecdotal validation
 from our user community that we're doing something right...
 
 > "Once my data is in Zed, everything is easy..." - Community User
@@ -82,7 +82,7 @@ Another community user tweeted:
 
 ![Brim is Beautiful](fig/brim-beautiful.png)
 
-Underneath all this lies the key takeaway for this talk:
+Underneath all this is a gut instinct:
 
 > Brim+Zed is bigger than just an app and search experience.
 > There's something up with the data model we found underneath it all.
