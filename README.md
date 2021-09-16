@@ -440,13 +440,13 @@ Many relational tables start out as CSV.
 
 Let's make some sample data:
 * Take some CSVs, clean them, and form ZSON
-* Tack on the values.json
+* Tack on some junk that doesn't fit in `junk.json`
 * Drag "pile of stuff" into a Brim data pool and play around with it
 
 ```
 cat employees.csv
 cat deals.csv
-cat values.zson
+cat junk.zson
 
 zq -z -i csv "type deal = {name:string,customer:string,forecast:float64}; this:=cast(this,deal)" deals.csv > pile.zson
 zq -z -i csv "type employee = {name:string,city:string,phone:string,salary:float64}; phone:=int64(phone) | this:=cast(this,employee)" employees.csv >> pile.zson
@@ -469,8 +469,11 @@ Brim doesn't really know what to make of it.
 * It doesn't have timestamps
 * There's no single schema to organize it in a table.
 
-But we can query it in Brim... since I was told to use SQL, we made Zed
-a superset of SQL...
+But we can query it in Brim...
+
+>Since I was told no wants and new query language and to use SQL, we made Zed
+>a superset of SQL...
+
 ```
 SELECT * FROM employee
 SELECT * FROM employee | cut typeof(this)
@@ -491,6 +494,8 @@ James, from our team, summarized it nicely:
 
 ## Instrospection the Schema from the Data
 
+Let's riff on this model and talk about introspection.
+
 Because Zed types are also values, we can put a type anywhere a value
 goes... in particular a group-by key.
 
@@ -509,7 +514,6 @@ And the clean data is
 ```
 not (is(type({a:string,b:string,c:string})) or is(type({message:string})))
 ```
-```
 Let's put the clean data in a new pool...
 ```
 zapi create CleanTables
@@ -526,6 +530,7 @@ So let's go back to the pcap data in the app and run Henri's query:
 ```
 count() by typeof(this)
 ```
+I love this so much, I have a query in my library called `Shapes`
 
 Ok, that's really powerful but it would be more intuitive to see a sample
 value of each type...  you can use the _any_ aggregator!
