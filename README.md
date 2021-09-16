@@ -43,6 +43,8 @@ data lake for cloud storage -- called a
 --- providing time travel, live ingest, search indexes, and
 transactionally consistent views across distributed workers.
 
+> Heads up and joke about video... screen may lag voice.
+
 ## Introduction
 
 > Feel free to follow along at [github.com/mccanne/sharkfest](https://github.com/mccanne/sharkfest) XXX move to brimdata
@@ -80,10 +82,11 @@ Another community user tweeted:
 
 Underneath all this is the key takeaway for this talk:
 
+XXX
+> Bigger than just an app and search experience.
+> Something up the data model was underneath it all.
 > Zed is all about _ergonomics_ for _data engineering_.
 > Zed makes it all easier.
-
-Human productivity.  Not so much speeds and feeds.
 
 ## Zed & Brim
 
@@ -144,7 +147,8 @@ While the PCAP is loading, here is the wiring behind the scenes...
 
 ## Our Team
 
-We realized there was this _ergonomics_ problem to solve for data engineering
+We realized there was there was a big _ergonomics_ problem to solve for
+data engineering
 * Not a typical startup
 * A multi-year, research effort
 * _Creation of_ open-source project rather than its _commercialization_
@@ -170,7 +174,7 @@ We are just now transitioning from research mode to execution...
 
 ## Why not JSON + Elastic?
 
-This looks a lot like ELK...
+Brim+Zed looks a lot like ELK...
 
 Douglas Crockford: [JSON](https://www.json.org/json-en.html)
 * Just send a javascript data structure to a javascript entity
@@ -186,123 +190,162 @@ _It's hard to make things easy._
 
 They did it.  Brilliant, easy, simple.
 
-## The Catch
+## The Bifurcation of Search and Analytics
 
-Works great for many simple uses cases.
+Yet, search alone is usually not enough...
 
-But the simplicity of JSON is a double-edged sword
-* limited data types (object, array, string, number, bool, null)
-* no schemas in JSON ([JSON Schema](https://json-schema.org/) can be bolted on)
-* suboptimal format for scaleable analytics
+* We saw a recurring design pattern in large-scale deployments
+* Need for _historical analytics_
+* Bifurcated search/analytics model
+    *Search*: OpenSearch, Elastic, Splunk
+        * Unstructured logs or semistructured JSON
+    * *Analytics*: in a lake or warehouse
+        *  Relational tables, e.g, ClickHouse, BigQuery, Snowflake
+        *  Parquet files on S3
 
-The more we worked on this problem, the more we were pulled in by the
-Zeek data model.
+![Bifurcated Search/Analytics](fig/bifurcated.png)
 
-For example, the Zeek TSV log format is rich and structured.
+XXX add this to figure above...
+Make sure all data conforms to pre-design set of schemas (show schemas on figuer)
+* Elastic can recover rich structure even with JSON intermediary
+* Analytics organized around relational table with schemas
+* Parquet files with schemas for efficient columnar analytics
+
+## Schemas Complicate Things
+
+We have thought a lot about what makes these systems brittle and difficult
+and have concluded it's the schemas:
+> Schemas are fantastic as a _policy_ for organizing your data,
+> but they get in the way as a _mechanism_ for data storage and transport.
+
+### Example 1
+
+The ETL pipeline breaks when something changes
+* Someone adds a new plugin to Zeek
+* The plugin adds a new field to Zeek "conn logs"
+* The ETL doesn't have a schema with for that new column
+
+(show figure)
+
+_The data-organizing policy is a relational schema
+and the mechanism is a relational table._
+
+### Example 2
+
+The Zeek log format is type-rich and structured:
 ```
 #fields	ts              uid                     id.orig_h       id.orig_p ...
 #types  time            string                  addr            port      ...
 1521911721.255387	C8Tful1TvM3Zf5x8fl	10.164.94.120	39681 ...
 1521911721.411148	CXWfTK3LRdiuQxBbM6	10.47.25.80	50817 ...
 ```
-But to get this structured data into Elastic...
-* format as JSON and lose information
-* configure extensive "mapping rules" in ingest pipeline
-* mapping rules recover richness of data that was present but lost
 
+Elastic Common Schema (ECS) is a type-rich schema system:
+* data communicated as regular type-impoverished JSON
+* ingest pipelines map JSON to ECS objects
+
+So we have this song and dance:
 ![Zeek talking to Elastic](fig/foo-bar.png)
+
+(TODO update figure to show Zeek Log -> JSON -> ECS Log and mapping setup)
 
 [Corelight's ECS mapping repo](https://github.com/corelight/ecs-mapping)
 
-This all creates complexity.
+_The data-organizing policy is an ECS schema
+and the mechanism is a store of ECS-schema data objects._
 
-## The Bifurcation of Search and Analytics
+### Example 3
 
-Moreover, search is usually not enough...
-* We saw a recurring design pattern among the users we met with
-* Need for _historical analytics_
-* Bifurcated search/analytics model
-    *Search*: OpenSearch, Elastic, Splunk
-        * Unstructured logs or semistructured JSON
-    * *Analytics*: An Analytics Lake
-        * "Cleaned-up data" in relational tables, e.g, ClickHouse, BigQuery, Snowflake
-        * "Schema-siloed" Parquet files on S3
+Writing data to a Parquet file on S3:
+* Scan all records in input to determine schema
+* Open the Parquet file with the schema
+* Write records that conform to schema
 
-![Bifurcated Search/Analytics](fig/bifurcated.png)
+_The data-organizing policy is a Parquet schema and the mechanism is a file of
+records that all conform to the Parquet schema._
 
-Each piece is
-* easy enough and sensible by itself,
-* but when you assemble the pieces, things get complex fast!
+### Example 4
 
-## Schemas to the Rescue
+Sending structured data over Kafka with Avro:
+* Sender has record to send
+* Sender contacts the "schema registry" with record's schema and receives ID
+    * (or it retrieves the ID from a local cache)
+* Sender tags data of record with ID
+* Sender transmits data on Kafka topic
+* Receives pulls data from Kafka topic
+* Receiver contacts schema registry with record's ID to get schema
+    * (or it retrieves the schema from a local cache)
+* Receiver decodes record data using schema
 
-Make sure all data conforms to pre-design set of schemas
-* Elastic can recover rich structure even with JSON intermediary
-* Analytics organized around relational table with schemas
-* Parquet files with schemas for efficient columnar analytics
+Here's a [diagram from stackoverflow](https://stackoverflow.com/questions/51609807/schema-registry-kafka-how-could-i-integrate-it-into-java-project):
 
-But there's another catch...
-* It's all quite fragile
-* Need to keep schema design in sync with reality
-* _The downstream stuff_ breaks when upstream things change
+![Avro with Schema Registy](fig/59AMm.png)
 
-And why do you want to manage two different systems?
+_The data-organizing policy is a set of Avro schemas and the
+mechanism is a sequence of records encoded with these schemas."
 
-![Bifurcated Search/Analytics](fig/bifurcated.png)
+### Example 5
+
+Your business is a complex application with complex data pipelines:
+* the data models are all defined as protobuf schemas
+* the system components all communicate using protobuf-compiled gRPC endpoints
+* every time a model is updated, everything needs to be recompiled and redeployed
+
+_The data-organizing policy is a set of protobuf schemas and the mechanism is
+a communication stub that adheres to the same protobuf schemas_
+
+> Aside: a good friend of mine is an analytics engineer and they organize their
+> pipelines around protobufs and he told me "managing all the protos in the face
+> of ongoing change is really hard, especially when the protos extend into
+> other domains like Amazon services".
 
 ## Policy & Mechanism
 
-* An old adage says _you should separate policy from mechanism_
-* Yet, Parquet and relational tables combine schema with format
-* If schemas are your policy for clean data _and_ tables are your mechanism,
-then these approaches might just lead to headaches...
+In all of the above examples:
+* A schema defines the organizing _policy_ for the data, and
+* the very same schema constrains the _mechanism_ for encoding the data.
 
-## Schema Declarations cause Cognitive Overload
+An old design principle says you should separate _policy_ from _mechanism_ ...
 
-Said another way...
-
-* If you are declaring schemas before you can write data...
-* If you are creating relational tables before you can query...
-* If you are writing code to talk to a schema registry...
-* If you are compiling _protos_ before you can communicate with a server...
-
-... then you may be _doing things the hard way_.
-
-Your extra effort comes from having to handle policy and mechanism _at the same time_.
+Could this be good advice here?  The examples above are all pretty gunky.
 
 ## Zed: A Better Way
 
 What if _the mechanism_ were _self-describing data_:
 
-* A comprehensive _type system_ instead of top-level _schemas_
-* First-class types to enable "schemas as values"
-* Type-adaptive entities instead of fixed schemas
+* A comprehensive _type system_ embedded in the data itself
+* First-class types for "types as values"
+* Entities adapt to data types
+    * instead of being constrained by fixed set of schemas
 
 And what if _the policy_ were enforced externally by the _type system_?
 
+Before we can explain how this will work, let's give a quick tour
+of the Zed data model.
+
 ## Composable Tools
 
-_Switching gears_: I'll use our tooling to motivate the Zed data model.
+We'll use our tooling for a quick tour of Zed.
 
 We have taken a very modular, "composable tools" approach
 * CLI tools written in [Go](https://golang.org/)
-* large set of simple verbs as commands
-* fabulous for dev, test, debug
-* bite-sized pieces for learning the system
+* any new functionality developed as CLI command
+    * fabulous for dev, test, and debug
+    * bite-sized chunks for learning the system
+    * most functionality exposed through service API
 
-> run `zed -h` and walk through commands briefly
-> zed lake vs zed api
+Like the `docker` command, everything packaged under the `zed` command.
 
-Like the `docker` command, everything packaged under the `zed` command, though there
-are a couple shortcuts:
-* `zq` - `zed query` operates on files and streams
-* `zapi`- `zed api` client to talk to service
+Here are a just few:
 
-## A Zed Primer
+* `zed query` - perform Zed queries and analytics files and Unix streams
+* `zed api`- execute commands via the Zed lake service
+* `zed lake serve` - run a service endpoint for a "Zed lake"
+* We have a couple shortcuts:
+    * `zq` for `zed query` (play on `jq` if you know that tool)
+    * `zapi` for `zed api`
 
-Zed unifies the document-model of JSON with the relational model of SQL tables.
-
-Let's start with JSON and we'll work our away over to relational tables.
+## A Zed Tour
 
 We'll use `zq` to take an input, do no processing, and display it
 in pretty-printed ZSON.
@@ -310,10 +353,10 @@ in pretty-printed ZSON.
 ```
 echo "..." | zq -Z -
 ```
-Leverage the simplicity of JSON.
+We leveraged the simplicity of JSON:
 * *Zed is a superset of JSON*
 * The human-readable form of Zed is called *ZSON*
-* E.g., we'll take JSON/ZSON as input and pretty-print it:
+* We'll take JSON/ZSON as input and pretty-print it:
 ```
 echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z -
 ```
@@ -349,67 +392,58 @@ zq -Z values.zson
         v13: { a:1, r:{s1:"hello", s2:"world"}}
 }
 ```
-Notice:
-* mostly implied types (like JSON)
-* literal syntax is mostly unambiguous
-* where there is ambiguity, _type decorators_ given in parens
+What we _don't do here_ is define a schema then fit the values into
+the schema.
 
 Data is self describing.
 
-No need to define a schema first and shoehorn it all in.
-
-## A Challenge: Mixed-Type Arrays
-
-If ZSON is
-* a superset of JSON,
-* but also statically typed,
-* how do we handle mixed-type arrays?
-
+The Zed query language lets you operate over Zed:
 ```
-[ "hello", 1,  true, null ]
+zq -Z "cut v1,v2,v0:=v1+v2,v7,net:=network_of(v7)" values.zson
 ```
-What is the type of this array value?
-* Array of `any`?
-* Array of ...?
-
-Let's have a look to see what we decided...
-```
-echo '{ A:["hello",1,"world",true,2,false] }' | zq -Z -
-```
-Dynamic array types can be distilled into a static union type!
-```
-echo '{ A:["hello",1,"world",true,2,false] }' | zq -Z "cut typeof(A)" -
-```
-This gives `[(int64,string,bool)]`!
-* parentheses indicate a _union_ type
-* so this is type _array_ of a _union_ of `int64`, `string`, and `bool`
-
-Is all this important?
-* Unions rarely encountered in practice
-* But they can and do appear in JSON in the wild
-* And they are useful in _data shaping_ and _fusing_
 
 ## First-class Types
 
-You may have noticed: Zed _types_ are Zed _values_
+* We don't fit the values into a schema, but the values imply a "type"
+* Zed _types_ are Zed _values_
+* The `typeof` operator can be applied to any field, e.g.,
+```
+echo '{s:"hello"}' | zq -Z "typeof_s:=typeof(s)" -
+```
+The special value "this" refers to the current record in a declarative style:
+```
+echo '{s:"hello"}' | zq -Z "put copy:=this" -
+```
+Zed is strongly typed and `this` always implies its type:
+```
+echo '{s:"hello"}' | zq -Z "put typeof_this:=typeof(this)" -
+```
+Well that's starting to look like a schema... let's try something a little
+more complex:
+```
+echo '{name:"Sally",city:"Berkeley",salary:350000.}' | zq -Z "cut typeof_this:=typeof(this)" -
+```
+And now, let's name the schema with a Zed typedef:
+```
+echo '{name:"Sally",city:"Berkeley",salary:350000.}(=employee)' | zq -Z "cut typeof_this:=typeof(this)" -
+```
+Isn't this exactly a schema?
 
-The `typeof` operator can be applied to any field, e.g.,
-```
-zq -Z "cut t5:=typeof(v5), t6:=typeof(v6), t7:=typeof(v7), t11:=typeof(v11)" values.zson
-```
+## Converging the Zed Model
 
-What is the type of a type?
-```
-zq -Z "cut v5,T1:=typeof(v5) | T2:=typeof(T1)" values.zson
-```
-It's type _type_, of course!
+Let's make some sample data:
+* Take CSV, clean it, and form ZSON
+* Throw in the values.json
+
+
+## Data Intropection, Discovery, and Shaping
 
 Given first-class types, Henri had a brilliant idea:
 ```
 count() by typeof(this)
 ```
 * _this_ refers to the current record in a declarative fashion
-* Herem we count each unique _data shape_ in the input
+* Here, we count each unique _data shape_ in the input
 * Super powerful tool for data introspection
 
 Let's try this out on some Zeek logs:
@@ -462,19 +496,6 @@ zq -Z messy.zson
 cat shape.zed
 zq -Z -I shape.zed messy.zson
 ```
-
-## The Zed Data Model
-
-The Zed data model is simply:
-> a sequence of statically typed, heterogeneous values
-
-A sequence of records is valid ZSON
-```
-{a:1} {a:2} {s:"hello, world"}
-```
-* no need to put them in an array like JSON
-* ZSON is a _superset of NDJSON
-
 ## Zed is a Superset of Relational Tables
 
 Armed with the Zed data model, we can tackle relational tables.
