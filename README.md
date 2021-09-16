@@ -317,7 +317,7 @@ Here are a just few:
 * `zed api`- execute commands on a remote Zed lake service (or localhost)
 * `zed lake serve` - run a service endpoint for a "Zed lake"
 * We have a couple shortcuts:
-    * `zq` for `zed query` (play on `jq` if you know that tool)
+    * `zq` for `zed query` (play on [`jq`](https://stedolan.github.io/jq/) if you know that tool)
     * `zapi` for `zed api`
 
 ## A Zed Tour
@@ -329,8 +329,8 @@ in pretty-printed ZSON.
 echo "..." | zq -Z -
 ```
 We leveraged the familiarity and simplicity of JSON:
-* *Zed is a superset of JSON*
-* The human-readable form of Zed is called *ZSON*
+* Zed is a superset of JSON
+* The human-readable form of Zed is called _ZSON_
 * We can take JSON/ZSON as input and pretty-print it:
 ```
 echo '{"s":"hello","val":1,"a":[1,2],"b":true}' | zq -Z -
