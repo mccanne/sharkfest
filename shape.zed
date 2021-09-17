@@ -1,2 +1,0 @@
-const target = {ts:time,host:ip,metric:string,value:float64};
-this:=shape(this,target)
